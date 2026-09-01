@@ -1398,17 +1398,25 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
 
   const handleAddFilterGroup = async (e) => {
     e.preventDefault();
-    if (!newGroupForm.name) return;
-    const res = await adminFetch('/api/admin/filter-groups', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newGroupForm)
-    });
-    if (res.ok) {
-      setNewGroupForm({ name: '', filter_key: '' });
-      const flts = await safeFetchJson('/api/filter-groups');
-      if (flts) setFilterGroups(flts);
-      if (showToast) showToast('success', 'Filter Group Added', 'New product filter group created!');
+    if (!newGroupForm.name || !newGroupForm.name.trim()) return;
+    try {
+      const res = await adminFetch('/api/admin/filter-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newGroupForm)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setNewGroupForm({ name: '', filter_key: '' });
+        await fetchAdminData();
+        const flts = await safeFetchJson('/api/filter-groups');
+        if (flts && Array.isArray(flts)) setFilterGroups(flts);
+        if (showToast) showToast('success', 'Filter Group Added', 'New product filter group created!');
+      } else {
+        if (showToast) showToast('error', 'Creation Failed', data.error || 'Could not create filter group.');
+      }
+    } catch (err) {
+      if (showToast) showToast('error', 'Creation Error', err.message);
     }
   };
 
@@ -1420,8 +1428,9 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       danger: true,
       onConfirm: async () => {
         await adminFetch(`/api/admin/filter-groups/${id}`, { method: 'DELETE' });
+        await fetchAdminData();
         const flts = await safeFetchJson('/api/filter-groups');
-        if (flts) setFilterGroups(flts);
+        if (flts && Array.isArray(flts)) setFilterGroups(flts);
         if (showToast) showToast('info', 'Filter Group Deleted', 'Filter group removed.');
       }
     });
@@ -1429,17 +1438,25 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
 
   const handleAddFilterOption = async (groupId) => {
     const label = newOptionInputs[groupId];
-    if (!label) return;
-    const res = await adminFetch('/api/admin/filter-options', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ group_id: groupId, label })
-    });
-    if (res.ok) {
-      setNewOptionInputs({ ...newOptionInputs, [groupId]: '' });
-      const flts = await safeFetchJson('/api/filter-groups');
-      if (flts) setFilterGroups(flts);
-      if (showToast) showToast('success', 'Option Added', 'Filter pill option added!');
+    if (!label || !label.trim()) return;
+    try {
+      const res = await adminFetch('/api/admin/filter-options', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ group_id: groupId, label: label.trim() })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setNewOptionInputs(prev => ({ ...prev, [groupId]: '' }));
+        await fetchAdminData();
+        const flts = await safeFetchJson('/api/filter-groups');
+        if (flts && Array.isArray(flts)) setFilterGroups(flts);
+        if (showToast) showToast('success', 'Option Added', 'Filter pill option added!');
+      } else {
+        if (showToast) showToast('error', 'Option Failed', data.error || 'Could not add option.');
+      }
+    } catch (err) {
+      if (showToast) showToast('error', 'Option Error', err.message);
     }
   };
 
@@ -1451,8 +1468,9 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       danger: true,
       onConfirm: async () => {
         await adminFetch(`/api/admin/filter-options/${optId}`, { method: 'DELETE' });
+        await fetchAdminData();
         const flts = await safeFetchJson('/api/filter-groups');
-        if (flts) setFilterGroups(flts);
+        if (flts && Array.isArray(flts)) setFilterGroups(flts);
         if (showToast) showToast('info', 'Option Removed', 'Filter option deleted.');
       }
     });
