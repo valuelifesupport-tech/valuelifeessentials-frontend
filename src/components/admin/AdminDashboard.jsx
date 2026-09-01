@@ -247,6 +247,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
   const [mediaSearch, setMediaSearch] = useState('');
   const [mediaFilter, setMediaFilter] = useState('ALL');
   const [mediaUploading, setMediaUploading] = useState(false);
+  const [mediaCacheBuster, setMediaCacheBuster] = useState(Date.now());
   const [previewMediaItem, setPreviewMediaItem] = useState(null);
   const [showProductMediaPickerModal, setShowProductMediaPickerModal] = useState(false);
   const [deleteConfirmProduct, setDeleteConfirmProduct] = useState(null);
@@ -2775,7 +2776,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                       <div key={item.id} className="relative group bg-slate-850 border border-slate-800 rounded-2xl overflow-hidden flex flex-col justify-between shadow-sm hover:border-slate-700 transition-all">
                         <div className="relative h-36 bg-slate-900 overflow-hidden flex items-center justify-center p-1 cursor-pointer" onClick={() => setPreviewMediaItem(item)}>
                           <img 
-                            src={resolveImgUrl(item.url)} 
+                            src={`${resolveImgUrl(item.url)}${item.url && item.url.includes('?') ? '&' : '?'}cb=${mediaCacheBuster}`} 
                             alt={item.filename}
                             className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300" 
                             onError={(e) => { e.target.style.display = 'none'; }}
@@ -2823,6 +2824,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                                         });
                                         const data = await res.json();
                                         if (res.ok) {
+                                          setMediaCacheBuster(Date.now());
                                           await fetchAdminData();
                                           if (showToast) showToast('success', 'Image Replaced', `Image ${item.filename} replaced successfully!`);
                                         } else {
@@ -8059,7 +8061,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
             </div>
 
             <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden max-h-80 flex items-center justify-center p-2">
-              <img src={resolveImgUrl(previewMediaItem.url)} alt="Preview" className="max-h-72 object-contain rounded-xl" />
+              <img 
+                src={`${resolveImgUrl(previewMediaItem.url)}${previewMediaItem.url && previewMediaItem.url.includes('?') ? '&' : '?'}cb=${mediaCacheBuster}`} 
+                alt="Preview" 
+                className="max-h-72 object-contain rounded-xl" 
+              />
             </div>
 
             <div className="space-y-2 text-xs">
@@ -8101,6 +8107,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                       });
                       const data = await res.json();
                       if (res.ok) {
+                        setMediaCacheBuster(Date.now());
                         setPreviewMediaItem(null);
                         await fetchAdminData();
                         if (showToast) showToast('success', 'Image Replaced', `Image ${previewMediaItem.filename} replaced successfully!`);
@@ -8181,7 +8188,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                       >
                         <div className="h-28 bg-slate-900 overflow-hidden flex items-center justify-center p-1 relative">
                           <img
-                            src={resolveImgUrl(item.url)}
+                            src={`${resolveImgUrl(item.url)}${item.url && item.url.includes('?') ? '&' : '?'}cb=${mediaCacheBuster}`}
                             alt={item.filename}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                           />
