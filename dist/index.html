@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/valuelife_logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ValueLife Essentials | Pure Organic & Wellness Products</title>
+    <!-- Tailwind CSS & Performance Observer Error Shield -->
+    <script>
+      (function() {
+        var warn = console.warn;
+        console.warn = function() {
+          if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].indexOf('cdn.tailwindcss.com') !== -1) return;
+          warn.apply(console, arguments);
+        };
+
+        // Suppress browser extension / performance observer startTime errors
+        window.addEventListener('error', function(e) {
+          if (e && e.message && (e.message.indexOf('startTime') !== -1 || e.message.indexOf('reportAllChanges') !== -1)) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(e) {
+          if (e && e.reason && e.reason.message && (e.reason.message.indexOf('startTime') !== -1 || e.reason.message.indexOf('reportAllChanges') !== -1)) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            return true;
+          }
+        }, true);
+      })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                DEFAULT: '#2d6a4f',
+                dark: '#1b4332',
+                light: '#52b788',
+              },
+              accent: '#d8f3dc',
+              gold: '#e9c46a',
+              slate: {
+                850: '#0f172a',
+                950: '#020617'
+              }
+            },
+            fontFamily: {
+              body: ['"Plus Jakarta Sans"', 'sans-serif'],
+              heading: ['Outfit', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index-N3y0l7EH.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BOghT1qg.css">
+  </head>
+  <body class="bg-gray-50 text-gray-900 font-['Plus_Jakarta_Sans'] antialiased">
+    <div id="root"></div>
+  </body>
+</html>
