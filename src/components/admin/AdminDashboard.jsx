@@ -208,6 +208,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
     is_best_product: false, 
     seo_title: '', seo_description: '', url_handle: '',
     images: [], 
+    variants: [],
     specs_json: '{"material":"100% Certified Organic","ideal_for":"Health & Wellness","durability":"2 Years Shelf Life"}'
   };
 
@@ -1011,7 +1012,8 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
 
     let finalSku = productForm.sku;
     if (isDuplicateSku || !finalSku || !finalSku.trim()) {
-      finalSku = `VLE-PROD-${Math.floor(100 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`;
+      const titleSlug = (productForm.title || 'PROD').trim().replace(/[^a-zA-Z0-9]+/g, '-').slice(0, 10).toUpperCase().replace(/(^-|-$)+/g, '');
+      finalSku = `VLE-${titleSlug || 'PROD'}-${Math.floor(100 + Math.random() * 900)}`;
     }
 
     try {
@@ -1023,7 +1025,31 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
         .map(img => (typeof img === 'object' && img?.image_url) ? img.image_url : img)
         .filter(Boolean);
 
-      const cleanFormVariants = (productForm.variants || []).map(v => {
+      // Auto-commit any pending unadded variant form inputs
+      let mergedVariants = [...(productForm.variants || [])];
+      if (newVariantForm && newVariantForm.variant_name && newVariantForm.variant_name.trim()) {
+        const vPrice = Number(newVariantForm.price_inr || productForm.price_inr || 0);
+        const vPriceUsd = newVariantForm.price_usd !== '' && Number(newVariantForm.price_usd) > 0 ? Number(newVariantForm.price_usd) : Number((vPrice / 95).toFixed(2));
+        const vCompInr = Number(newVariantForm.compare_price_inr || 0);
+        const vCompUsd = newVariantForm.compare_price_usd !== '' && Number(newVariantForm.compare_price_usd) > 0 ? Number(newVariantForm.compare_price_usd) : (vCompInr > 0 ? Number((vCompInr / 95).toFixed(2)) : 0);
+        const vStock = Number(newVariantForm.stock || 100);
+        mergedVariants.push({
+          id: `var_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+          variant_name: newVariantForm.variant_name.trim(),
+          price_inr: vPrice,
+          price: vPrice,
+          discount_inr: vPrice,
+          price_usd: vPriceUsd,
+          discount_usd: vPriceUsd,
+          compare_price_inr: vCompInr || null,
+          compare_price_usd: vCompUsd || null,
+          stock: vStock,
+          sku: `OB-VAR-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+          image_url: productForm.images && productForm.images.length > 0 ? (typeof productForm.images[0] === 'object' ? productForm.images[0].image_url : productForm.images[0]) : null
+        });
+      }
+
+      const cleanFormVariants = mergedVariants.map(v => {
         const vPriceInr = Number(v.price_inr !== undefined && v.price_inr !== '' ? v.price_inr : (v.price || productForm.price_inr || 0));
         const vPriceUsd = (v.price_usd !== undefined && v.price_usd !== '' && Number(v.price_usd) > 0) ? Number(v.price_usd) : (vPriceInr > 0 ? Number((vPriceInr / 95).toFixed(2)) : 0);
         const vCompInr = (v.compare_price_inr !== undefined && v.compare_price_inr !== '' && Number(v.compare_price_inr) > 0) ? Number(v.compare_price_inr) : null;
@@ -1042,8 +1068,25 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
         };
       });
 
+      // Auto-fallback base price if base price was not entered but variants exist
+      let submitPriceInr = productForm.price_inr !== '' && productForm.price_inr !== undefined ? Number(productForm.price_inr) : 0;
+      let submitPriceUsd = productForm.price_usd !== '' && productForm.price_usd !== undefined ? Number(productForm.price_usd) : 0;
+      let submitDiscInr = productForm.discount_inr !== '' && productForm.discount_inr !== undefined ? Number(productForm.discount_inr) : submitPriceInr;
+      let submitDiscUsd = productForm.discount_usd !== '' && productForm.discount_usd !== undefined ? Number(productForm.discount_usd) : submitPriceUsd;
+
+      if (submitPriceInr === 0 && cleanFormVariants.length > 0) {
+        submitPriceInr = cleanFormVariants[0].price_inr;
+        submitPriceUsd = cleanFormVariants[0].price_usd;
+        submitDiscInr = cleanFormVariants[0].discount_inr || submitPriceInr;
+        submitDiscUsd = cleanFormVariants[0].discount_usd || submitPriceUsd;
+      }
+
       const payload = {
         ...productForm,
+        price_inr: submitPriceInr,
+        price_usd: submitPriceUsd,
+        discount_inr: submitDiscInr,
+        discount_usd: submitDiscUsd,
         images: cleanFormImages,
         variants: cleanFormVariants,
         tags: Array.isArray(productForm.tags) ? productForm.tags.join(', ') : productForm.tags,
@@ -1058,7 +1101,8 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       if (res.ok) {
         setShowProductModal(false);
         setEditingProduct(null);
-        fetchAdminData();
+        setNewVariantForm({ variant_name: '', price_inr: '', price_usd: '', compare_price_inr: '', compare_price_usd: '', stock: '100' });
+        await fetchAdminData();
         if (showToast) showToast('success', 'Product Saved', isEdit ? 'Product updated!' : 'New product created!');
       } else {
         const errorData = await res.json().catch(() => ({}));
@@ -1118,7 +1162,12 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       });
       if (res.ok) {
         setVariantForm({ variant_name: '', price_inr: 149, price_usd: 4, discount_inr: 99, discount_usd: 3, stock: 50 });
-        fetchAdminData();
+        const updatedProds = await safeFetchJson('/api/products?includeDrafts=true');
+        if (updatedProds) {
+          setProducts(updatedProds);
+          const found = updatedProds.find(p => p.id === selectedProductForVariants.id);
+          if (found) setSelectedProductForVariants(found);
+        }
         if (showToast) showToast('success', 'Variant Created', 'Added new variant pill.');
       }
     } catch (err) {}
@@ -1154,7 +1203,12 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
 
   const handleDeleteVariant = async (id) => {
     await adminFetch(`/api/variants/${id}`, { method: 'DELETE' });
-    fetchAdminData();
+    const updatedProds = await safeFetchJson('/api/products?includeDrafts=true');
+    if (updatedProds) {
+      setProducts(updatedProds);
+      const found = updatedProds.find(p => p.id === selectedProductForVariants?.id);
+      if (found) setSelectedProductForVariants(found);
+    }
     if (showToast) showToast('info', 'Variant Deleted', 'Variant deleted.');
   };
 
@@ -1351,7 +1405,8 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
     });
     if (res.ok) {
       setNewGroupForm({ name: '', filter_key: '' });
-      await fetchAdminData();
+      const flts = await safeFetchJson('/api/filter-groups');
+      if (flts) setFilterGroups(flts);
       if (showToast) showToast('success', 'Filter Group Added', 'New product filter group created!');
     }
   };
@@ -1364,7 +1419,8 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       danger: true,
       onConfirm: async () => {
         await adminFetch(`/api/admin/filter-groups/${id}`, { method: 'DELETE' });
-        await fetchAdminData();
+        const flts = await safeFetchJson('/api/filter-groups');
+        if (flts) setFilterGroups(flts);
         if (showToast) showToast('info', 'Filter Group Deleted', 'Filter group removed.');
       }
     });
@@ -1380,7 +1436,8 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
     });
     if (res.ok) {
       setNewOptionInputs({ ...newOptionInputs, [groupId]: '' });
-      await fetchAdminData();
+      const flts = await safeFetchJson('/api/filter-groups');
+      if (flts) setFilterGroups(flts);
       if (showToast) showToast('success', 'Option Added', 'Filter pill option added!');
     }
   };
@@ -1393,7 +1450,8 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       danger: true,
       onConfirm: async () => {
         await adminFetch(`/api/admin/filter-options/${optId}`, { method: 'DELETE' });
-        fetchAdminData();
+        const flts = await safeFetchJson('/api/filter-groups');
+        if (flts) setFilterGroups(flts);
         if (showToast) showToast('info', 'Option Removed', 'Filter option deleted.');
       }
     });
