@@ -664,61 +664,65 @@ export default function ProductDetailPage({
           </div>
         </div>
 
-        {/* 50-50 DESKTOP GRID: PRODUCT HIGHLIGHTS & DESCRIPTION (LEFT 50%) + SUGGESTED PRODUCTS (RIGHT 50%) */}
-        <div className="border-t pt-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-          {/* LEFT 50%: HIGHLIGHTS & ACCORDIONS */}
-          <div className="space-y-4 bg-gray-50/50 p-5 rounded-3xl border border-gray-200/80">
-            <div className="flex border-b border-gray-200 gap-4 text-xs font-extrabold text-gray-600 overflow-x-auto pb-1">
-              <button 
-                onClick={() => setActiveTab('highlights')}
-                className={`pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'highlights' ? 'border-[#2d6a4f] text-[#2d6a4f]' : 'border-transparent hover:text-gray-900'}`}
-              >
-                📝 Product Highlights
-              </button>
-              <button 
-                onClick={() => setActiveTab('plants')}
-                className={`pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'plants' ? 'border-[#2d6a4f] text-[#2d6a4f]' : 'border-transparent hover:text-gray-900'}`}
-              >
-                🪴 Suitable Plants & Usage
-              </button>
-              <button 
-                onClick={() => setActiveTab('shipping')}
-                className={`pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'shipping' ? 'border-[#2d6a4f] text-[#2d6a4f]' : 'border-transparent hover:text-gray-900'}`}
-              >
-                🚚 Shipping & COD Policy
-              </button>
-            </div>
+        {/* DYNAMIC GRID: PRODUCT HIGHLIGHTS & (OPTIONAL) FREQUENTLY BOUGHT TOGETHER */}
+        {(() => {
+          const rawBundleList = productData.frequently_bought_products || productData.frequentlyBoughtProducts || [];
+          const bundleList = Array.isArray(rawBundleList) ? rawBundleList.slice(0, 4) : [];
+          const hasFrequentlyBought = bundleList.length > 0;
 
-            <div className="text-xs text-gray-700 leading-relaxed space-y-4">
-              {activeTab === 'highlights' && (
-                <div className="space-y-3">
-                  <h4 className="font-extrabold text-sm text-gray-900">Description & Key Benefits:</h4>
-                  <p>{productData.description}</p>
+          return (
+            <div className={`border-t pt-8 grid grid-cols-1 ${hasFrequentlyBought ? 'md:grid-cols-2 gap-8' : 'w-full'} items-start`}>
+              {/* LEFT: HIGHLIGHTS & ACCORDIONS */}
+              <div className="space-y-4 bg-gray-50/50 p-5 rounded-3xl border border-gray-200/80">
+                <div className="flex border-b border-gray-200 gap-4 text-xs font-extrabold text-gray-600 overflow-x-auto pb-1">
+                  <button 
+                    onClick={() => setActiveTab('highlights')}
+                    className={`pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'highlights' ? 'border-[#2d6a4f] text-[#2d6a4f]' : 'border-transparent hover:text-gray-900'}`}
+                  >
+                    📝 Product Highlights
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('plants')}
+                    className={`pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'plants' ? 'border-[#2d6a4f] text-[#2d6a4f]' : 'border-transparent hover:text-gray-900'}`}
+                  >
+                    🪴 Suitable Plants & Usage
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('shipping')}
+                    className={`pb-3 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'shipping' ? 'border-[#2d6a4f] text-[#2d6a4f]' : 'border-transparent hover:text-gray-900'}`}
+                  >
+                    🚚 Shipping & COD Policy
+                  </button>
                 </div>
-              )}
 
-              {activeTab === 'plants' && (
-                <div className="space-y-3">
-                  <h4 className="font-extrabold text-sm text-gray-900">Recommended Plant Types:</h4>
-                  <p>Suitable for Tomato, Chilli, Brinjal, Spinach, Coriander, Cucumber, Rose, Jasmine, and indoor potted plants.</p>
+                <div className="text-xs text-gray-700 leading-relaxed space-y-4">
+                  {activeTab === 'highlights' && (
+                    <div className="space-y-3">
+                      <h4 className="font-extrabold text-sm text-gray-900">Description & Key Benefits:</h4>
+                      <p>{productData.description}</p>
+                    </div>
+                  )}
+
+                  {activeTab === 'plants' && (
+                    <div className="space-y-3">
+                      <h4 className="font-extrabold text-sm text-gray-900">Recommended Plant Types:</h4>
+                      <p>Suitable for Tomato, Chilli, Brinjal, Spinach, Coriander, Cucumber, Rose, Jasmine, and indoor potted plants.</p>
+                    </div>
+                  )}
+
+                  {activeTab === 'shipping' && (
+                    <div className="space-y-3">
+                      <h4 className="font-extrabold text-sm text-gray-900">Delivery Information:</h4>
+                      <p>All orders are dispatched within 24 hours via Express Courier. Cash on Delivery (COD) and 20% online partial deposit options available nationwide.</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
-              {activeTab === 'shipping' && (
-                <div className="space-y-3">
-                  <h4 className="font-extrabold text-sm text-gray-900">Delivery Information:</h4>
-                  <p>All orders are dispatched within 24 hours via Express Courier. Cash on Delivery (COD) and 20% online partial deposit options available nationwide.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT 50%: FREQUENTLY BOUGHT TOGETHER */}
-          <div className="space-y-4">
-            {(() => {
-              const rawBundleList = productData.frequently_bought_products || productData.frequentlyBoughtProducts || [];
-              const bundleList = rawBundleList.slice(0, 4);
-              if (bundleList.length === 0) return null;
+              {/* RIGHT: FREQUENTLY BOUGHT TOGETHER (ONLY RENDERS IF CONFIGURED BY ADMIN) */}
+              {hasFrequentlyBought && (
+                <div className="space-y-4">
+                  {(() => {
 
               // Calculate total price of all selected bundle items
               const bundleTotalPrice = bundleList.reduce((sum, item) => {
@@ -852,7 +856,10 @@ export default function ProductDetailPage({
               );
             })()}
           </div>
-        </div>
+        )}
+      </div>
+    );
+  })()}
         {/* 1. "SUGGESTED" BADGE & "YOU MIGHT ALSO LIKE" AUTO-SCROLL CAROUSEL SECTION */}
         {(() => {
           const suggestedList = productData.frequently_bought_products || productData.frequentlyBoughtProducts || [];
