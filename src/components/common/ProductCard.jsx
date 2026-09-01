@@ -37,13 +37,16 @@ export default function ProductCard({
 }) {
   const p = product;
   const isINR = currency === 'INR';
-  const rawPrice = isINR ? (Number(p.price_inr) || 0) : (Number(p.price_usd) || 0);
+  const firstVariant = Array.isArray(p.variants) && p.variants.length > 0 ? p.variants[0] : null;
+  const pPriceInr = Number(p.price_inr || p.price || (firstVariant ? (firstVariant.price_inr || firstVariant.price) : 0)) || 0;
+  const pPriceUsd = Number(p.price_usd) || (pPriceInr > 0 ? Number((pPriceInr / 95).toFixed(2)) : (firstVariant ? Number(firstVariant.price_usd || 0) : 0));
+  const rawPrice = isINR ? pPriceInr : pPriceUsd;
   const rawDiscount = isINR 
     ? (p.discount_inr !== undefined && p.discount_inr !== null && Number(p.discount_inr) > 0 && Number(p.discount_inr) < rawPrice ? Number(p.discount_inr) : null)
     : (p.discount_usd !== undefined && p.discount_usd !== null && Number(p.discount_usd) > 0 && Number(p.discount_usd) < rawPrice ? Number(p.discount_usd) : null);
   const rawCompare = isINR
-    ? (p.compare_price_inr !== undefined && p.compare_price_inr !== null && Number(p.compare_price_inr) > 0 ? Number(p.compare_price_inr) : null)
-    : (p.compare_price_usd !== undefined && p.compare_price_usd !== null && Number(p.compare_price_usd) > 0 ? Number(p.compare_price_usd) : null);
+    ? (p.compare_price_inr !== undefined && p.compare_price_inr !== null && Number(p.compare_price_inr) > 0 ? Number(p.compare_price_inr) : (firstVariant?.compare_price_inr ? Number(firstVariant.compare_price_inr) : null))
+    : (p.compare_price_usd !== undefined && p.compare_price_usd !== null && Number(p.compare_price_usd) > 0 ? Number(p.compare_price_usd) : (firstVariant?.compare_price_usd ? Number(firstVariant.compare_price_usd) : null));
 
   let pPrice = rawPrice;
   if (rawDiscount !== null && rawDiscount > 0 && rawDiscount < rawPrice) {

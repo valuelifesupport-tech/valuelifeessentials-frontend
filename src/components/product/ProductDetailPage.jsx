@@ -182,15 +182,36 @@ export default function ProductDetailPage({
         } catch (err) {}
       }
 
+      let cleanVariants = [];
       if (Array.isArray(data.variants)) {
-        const seenVar = new Set();
-        data.variants = data.variants.filter(v => {
-          const vName = (v?.variant_name || v?.name || '').trim().toLowerCase();
-          if (!vName || seenVar.has(vName)) return false;
-          seenVar.add(vName);
-          return true;
-        });
+        cleanVariants = data.variants;
+      } else if (typeof data.variants === 'string') {
+        try {
+          cleanVariants = JSON.parse(data.variants);
+        } catch (e) {
+          cleanVariants = [];
+        }
       }
+
+      let cleanImages = [];
+      if (Array.isArray(data.images)) {
+        cleanImages = data.images;
+      } else if (typeof data.images === 'string') {
+        try {
+          cleanImages = JSON.parse(data.images);
+        } catch (e) {
+          cleanImages = data.images ? [data.images] : [];
+        }
+      }
+
+      const seenVar = new Set();
+      data.variants = (Array.isArray(cleanVariants) ? cleanVariants : []).filter(v => {
+        const vName = (v?.variant_name || v?.name || v?.title || '').trim().toLowerCase();
+        if (!vName || seenVar.has(vName)) return false;
+        seenVar.add(vName);
+        return true;
+      });
+      data.images = Array.isArray(cleanImages) ? cleanImages : [];
 
       setProductData(data);
       
@@ -312,14 +333,18 @@ export default function ProductDetailPage({
     );
   }
 
-  const targetItem = selectedVariant || productData;
-  const isINR = currency === 'INR';
-  const prodInr = Number(productData.price_inr) || 0;
-  const prodUsd = Number(productData.price_usd) || (prodInr > 0 ? Number((prodInr / 95).toFixed(2)) : 0);
-  const varInr = targetItem && Number(targetItem.price_inr) > 0 ? Number(targetItem.price_inr) : (targetItem && Number(targetItem.price) > 0 ? Number(targetItem.price) : prodInr);
-  const varUsd = targetItem && Number(targetItem.price_usd) > 0 ? Number(targetItem.price_usd) : (varInr > 0 ? Number((varInr / 95).toFixed(2)) : prodUsd);
+  const variantsList = Array.isArray(productData?.variants) ? productData.variants : [];
+  const firstVariant = variantsList.length > 0 ? variantsList[0] : null;
+  const targetItem = selectedVariant || firstVariant || productData;
 
-  const rawPrice = isINR ? varInr : varUsd;
+  const isINR = currency === 'INR';
+  const prodInr = Number(productData.price_inr || productData.price || productData.discount_inr || (firstVariant ? (firstVariant.price_inr || firstVariant.price) : 0)) || 0;
+  const prodUsd = Number(productData.price_usd || productData.discount_usd) || (prodInr > 0 ? Number((prodInr / 95).toFixed(2)) : (firstVariant ? Number(firstVariant.price_usd || 0) : 0));
+
+  const varInr = targetItem && (Number(targetItem.price_inr) > 0 ? Number(targetItem.price_inr) : (Number(targetItem.price) > 0 ? Number(targetItem.price) : (Number(targetItem.discount_inr) > 0 ? Number(targetItem.discount_inr) : prodInr)));
+  const varUsd = targetItem && (Number(targetItem.price_usd) > 0 ? Number(targetItem.price_usd) : (Number(targetItem.discount_usd) > 0 ? Number(targetItem.discount_usd) : (varInr > 0 ? Number((varInr / 95).toFixed(2)) : prodUsd)));
+
+  const rawPrice = isINR ? (varInr > 0 ? varInr : prodInr) : (varUsd > 0 ? varUsd : prodUsd);
   const rawDiscount = isINR 
     ? (targetItem.discount_inr !== undefined && targetItem.discount_inr !== null && Number(targetItem.discount_inr) > 0 && Number(targetItem.discount_inr) < rawPrice ? Number(targetItem.discount_inr) : null)
     : (targetItem.discount_usd !== undefined && targetItem.discount_usd !== null && Number(targetItem.discount_usd) > 0 && Number(targetItem.discount_usd) < rawPrice ? Number(targetItem.discount_usd) : null);
@@ -456,7 +481,7 @@ export default function ProductDetailPage({
           <div className="space-y-6">
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-snug font-['Outfit']">
-                {productData.title}
+                {productData.title || productData.name || 'ValueLife Essentials Product'}
               </h1>
 
               {/* RATING STARS */}
@@ -469,7 +494,7 @@ export default function ProductDetailPage({
                   <Star size={16} fill="currentColor" />
                 </div>
                 <span className="font-bold text-xs text-gray-700">
-                  {Number(productData.ratingStats?.avg_rating || 4.69).toFixed(2)} | {productData.ratingStats?.total_reviews || 74}
+                  {Number(productData.ratingStats?.avg_rating !== undefined ? productData.ratingStats.avg_rating : (productData.avg_rating || 0)).toFixed(1)} | {productData.ratingStats?.total_reviews ?? productData.total_reviews ?? 0} reviews
                 </span>
               </div>
             </div>
@@ -497,28 +522,39 @@ export default function ProductDetailPage({
             </div>
 
             {/* PRODUCT VARIANTS SELECTOR PILLS (EXACT LOOK OF USER SCREENSHOT) */}
-            {productData.variants && productData.variants.length > 0 && (
-              <div className="space-y-1.5 pt-1">
-                <label className="text-xs font-medium text-gray-500 block">
-                  Select
+            {variantsList && variantsList.length > 0 && (
+              <div className="space-y-2 pt-2 pb-1 border-t border-gray-100">
+                <label className="text-xs font-bold text-gray-700 block">
+                  Select Size / Option:
                 </label>
 
                 <div className="flex flex-wrap gap-2.5">
-                  {productData.variants.map((v) => {
-                    const isSelected = (selectedVariant?.id === v.id) || (selectedVariant?.variant_name === v.variant_name);
+                  {variantsList.map((v, vIdx) => {
+                    const isSelected = (selectedVariant?.id && v.id && selectedVariant.id === v.id) || 
+                                       (selectedVariant?.variant_name && v.variant_name && selectedVariant.variant_name === v.variant_name) ||
+                                       (!selectedVariant && vIdx === 0);
+
+                    const vPrice = isINR 
+                      ? (Number(v.price_inr) || Number(v.price) || 0) 
+                      : (Number(v.price_usd) || (Number(v.price_inr || v.price) ? Number(((Number(v.price_inr || v.price)) / 95).toFixed(2)) : 0));
 
                     return (
                       <button
-                        key={v.id || v.variant_name}
+                        key={v.id || v.variant_name || vIdx}
                         type="button"
                         onClick={() => handleSelectVariant(v)}
-                        className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all border cursor-pointer ${
+                        className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all border cursor-pointer flex items-center gap-1.5 ${
                           isSelected
-                            ? 'border-2 border-[#558b2f] bg-[#f0f7e6] text-[#33691e] shadow-xs ring-1 ring-[#558b2f]/20 font-extrabold'
-                            : 'border border-gray-200 bg-white text-[#33691e] font-semibold hover:border-[#558b2f] hover:bg-emerald-50/30'
+                            ? 'border-2 border-emerald-600 bg-emerald-50 text-emerald-950 shadow-sm ring-2 ring-emerald-500/20 font-extrabold scale-105'
+                            : 'border border-gray-200 bg-white text-gray-700 font-semibold hover:border-emerald-500 hover:bg-emerald-50/30'
                         }`}
                       >
-                        {v.variant_name || v.name}
+                        <span>{v.variant_name || v.name || v.title || `Option ${vIdx + 1}`}</span>
+                        {vPrice > 0 && (
+                          <span className={`text-[11px] font-bold ${isSelected ? 'text-emerald-700' : 'text-gray-500'}`}>
+                            • {currencySymbol}{vPrice.toFixed(2)}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
