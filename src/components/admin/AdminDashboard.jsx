@@ -1316,8 +1316,12 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
         body: JSON.stringify(bannerForm)
       });
       if (res.ok) {
+        const saved = await res.json().catch(() => null);
         setShowBannerModal(false);
-        fetchAdminData();
+        setBannerForm({ title: '', subtitle: '', image_url: '', link_url: '/products' });
+        // Re-fetch banners from API to get fresh list
+        const fresh = await safeFetchJson('/api/banners');
+        if (fresh) setBanners(fresh);
         if (showToast) showToast('success', 'Banner Saved', 'New banner created.');
       }
     } catch (err) {}
@@ -1339,7 +1343,9 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       });
       if (res.ok) {
         setShowCouponModal(false);
-        fetchAdminData();
+        // Re-fetch coupons from API to get fresh list
+        const fresh = await safeFetchJson('/api/coupons');
+        if (fresh) setCoupons(fresh);
         if (showToast) showToast('success', 'Coupon Created', `Code ${couponForm.code} active.`);
       }
     } catch (err) {}
@@ -1402,6 +1408,8 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
         setShowPageModal(false);
         setEditingPage(null);
         fetchAdminData();
+        const freshPages = await safeFetchJson('/api/pages');
+        if (freshPages) setPages(freshPages);
         if (showToast) showToast('success', 'Page Saved', isEdit ? 'Custom page updated!' : 'New custom page created!');
       }
     } catch (err) {}
@@ -1415,7 +1423,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       danger: true,
       onConfirm: async () => {
         await adminFetch(`/api/admin/pages/${id}`, { method: 'DELETE' });
-        fetchAdminData();
+        setPages(prev => prev.filter(p => p.id !== id));
         if (showToast) showToast('info', 'Page Deleted', 'Custom page deleted.');
       }
     });
@@ -1433,7 +1441,6 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       const data = await res.json();
       if (res.ok) {
         setNewGroupForm({ name: '', filter_key: '' });
-        await fetchAdminData();
         const flts = await safeFetchJson('/api/filter-groups');
         if (flts && Array.isArray(flts)) setFilterGroups(flts);
         if (showToast) showToast('success', 'Filter Group Added', 'New product filter group created!');
@@ -1453,7 +1460,6 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       danger: true,
       onConfirm: async () => {
         await adminFetch(`/api/admin/filter-groups/${id}`, { method: 'DELETE' });
-        await fetchAdminData();
         const flts = await safeFetchJson('/api/filter-groups');
         if (flts && Array.isArray(flts)) setFilterGroups(flts);
         if (showToast) showToast('info', 'Filter Group Deleted', 'Filter group removed.');
@@ -1473,7 +1479,6 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       const data = await res.json();
       if (res.ok) {
         setNewOptionInputs(prev => ({ ...prev, [groupId]: '' }));
-        await fetchAdminData();
         const flts = await safeFetchJson('/api/filter-groups');
         if (flts && Array.isArray(flts)) setFilterGroups(flts);
         if (showToast) showToast('success', 'Option Added', 'Filter pill option added!');
@@ -1493,7 +1498,6 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       danger: true,
       onConfirm: async () => {
         await adminFetch(`/api/admin/filter-options/${optId}`, { method: 'DELETE' });
-        await fetchAdminData();
         const flts = await safeFetchJson('/api/filter-groups');
         if (flts && Array.isArray(flts)) setFilterGroups(flts);
         if (showToast) showToast('info', 'Option Removed', 'Filter option deleted.');
@@ -2661,22 +2665,25 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                           <button
                             type="button"
                             onClick={async () => {
-                              const newStatus = (col.show_in_navbar === 1 || col.show_in_navbar === true) ? 0 : 1;
-                              await adminFetch(`/api/collections/${col.id}/navbar-toggle`, {
+                              const isCurrentlyOn = col.show_in_navbar === 1 || col.show_in_navbar === true || String(col.show_in_navbar) === '1';
+                              const newStatus = isCurrentlyOn ? 0 : 1;
+                              const res = await adminFetch(`/api/collections/${col.id}/navbar-toggle`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ show_in_navbar: newStatus })
                               });
-                              fetchAdminData();
-                              if (showToast) showToast('success', 'Navbar Visibility Updated', `Collection '${col.name}' navbar link turned ${newStatus === 1 ? 'ON' : 'OFF'}.`);
+                              if (res.ok) {
+                                setCollections(prev => prev.map(c => c.id === col.id ? { ...c, show_in_navbar: newStatus } : c));
+                                if (showToast) showToast('success', 'Navbar Visibility Updated', `Collection '${col.name}' navbar link turned ${newStatus === 1 ? 'ON' : 'OFF'}.`);
+                              }
                             }}
                             className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold cursor-pointer transition-all border ${
-                              col.show_in_navbar === 1
+                              (col.show_in_navbar === 1 || col.show_in_navbar === true || String(col.show_in_navbar) === '1')
                                 ? 'bg-emerald-950 text-emerald-400 border-emerald-700 hover:bg-emerald-900'
                                 : 'bg-slate-900 text-slate-400 border-slate-700 hover:bg-slate-800 hover:text-white'
                             }`}
                           >
-                            {col.show_in_navbar === 1 ? '🟢 SHOW IN NAVBAR (ON)' : '⚪ HIDDEN FROM NAVBAR (OFF)'}
+                            {(col.show_in_navbar === 1 || col.show_in_navbar === true || String(col.show_in_navbar) === '1') ? '🟢 SHOW IN NAVBAR (ON)' : '⚪ HIDDEN FROM NAVBAR (OFF)'}
                           </button>
                         </div>
                         <div className="space-y-1 text-right">
@@ -2961,7 +2968,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                               <p className="text-[11px] text-slate-400 leading-tight">{b.subtitle}</p>
                               {b.link_url && <span className="text-[10px] text-emerald-400 font-mono block mt-1">Link: {b.link_url}</span>}
                             </div>
-                            <button onClick={async () => { await adminFetch(`/api/banners/${b.id}`, { method: 'DELETE' }); fetchAdminData(); }} className="text-rose-400 hover:text-rose-300 p-1.5 bg-rose-950/60 rounded-lg border border-rose-900 text-xs" title="Delete Banner">
+                            <button onClick={async () => { const res = await adminFetch(`/api/banners/${b.id}`, { method: 'DELETE' }); if (res.ok) { setBanners(prev => prev.filter(x => x.id !== b.id)); if (showToast) showToast('success', 'Banner Deleted', `Banner "${b.title}" removed.`); } }} className="text-rose-400 hover:text-rose-300 p-1.5 bg-rose-950/60 rounded-lg border border-rose-900 text-xs" title="Delete Banner">
                               <Trash2 size={15} />
                             </button>
                           </div>
@@ -3035,7 +3042,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                         {c.discount_type === 'PERCENT' ? `${c.discount_value}% OFF` : `₹${c.discount_value} FLAT OFF`}
                       </p>
                     </div>
-                    <button onClick={async () => { await adminFetch(`/api/coupons/${c.id}`, { method: 'DELETE' }); fetchAdminData(); }} className="text-red-400 p-1">
+                    <button onClick={async () => { const res = await adminFetch(`/api/coupons/${c.id}`, { method: 'DELETE' }); if (res.ok) { setCoupons(prev => prev.filter(x => x.id !== c.id)); if (showToast) showToast('success', 'Coupon Deleted', `Coupon "${c.code}" removed.`); } }} className="text-red-400 p-1">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -3203,13 +3210,15 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                               type="button"
                               onClick={async () => {
                                 const newStatus = r.status === 'APPROVED' ? 'REJECTED' : 'APPROVED';
-                                await adminFetch(`/api/admin/reviews/${r.id}/status`, {
+                                const res = await adminFetch(`/api/admin/reviews/${r.id}/status`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({ status: newStatus })
                                 });
-                                fetchAdminData();
-                                showToast('success', 'Status Updated', `Review set to ${newStatus}`);
+                                if (res.ok) {
+                                  setReviews(prev => prev.map(rev => rev.id === r.id ? { ...rev, status: newStatus } : rev));
+                                  showToast('success', 'Status Updated', `Review set to ${newStatus}`);
+                                }
                               }}
                               className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl border border-slate-700 text-[11px] cursor-pointer"
                             >
@@ -3225,9 +3234,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                                   confirmText: 'Delete Review',
                                   danger: true,
                                   onConfirm: async () => {
-                                    await adminFetch(`/api/admin/reviews/${r.id}`, { method: 'DELETE' });
-                                    fetchAdminData();
-                                    if (showToast) showToast('info', 'Review Deleted', 'Review removed from system');
+                                    const res = await adminFetch(`/api/admin/reviews/${r.id}`, { method: 'DELETE' });
+                                    if (res.ok) {
+                                      setReviews(prev => prev.filter(rev => rev.id !== r.id));
+                                      if (showToast) showToast('info', 'Review Deleted', 'Review removed from system');
+                                    }
                                   }
                                 });
                               }}
@@ -3277,13 +3288,16 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                               onKeyDown={async (e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
-                                  await adminFetch(`/api/admin/reviews/${r.id}/reply`, {
+                                  const replyVal = e.target.value;
+                                  const res = await adminFetch(`/api/admin/reviews/${r.id}/reply`, {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ admin_reply: e.target.value })
+                                    body: JSON.stringify({ admin_reply: replyVal })
                                   });
-                                  fetchAdminData();
-                                  showToast('success', 'Reply Saved', 'Admin response published');
+                                  if (res.ok) {
+                                    setReviews(prev => prev.map(rev => rev.id === r.id ? { ...rev, admin_reply: replyVal } : rev));
+                                    showToast('success', 'Reply Saved', 'Admin response published');
+                                  }
                                 }
                               }}
                               className="flex-1 p-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-xs"
