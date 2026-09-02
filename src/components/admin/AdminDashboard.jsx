@@ -49,7 +49,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       'x-admin-token': token,
       ...(options.headers || {})
     };
-    return window.fetch(targetUrl, { ...options, headers });
+    return window.fetch(targetUrl, { cache: 'no-store', ...options, headers });
   };
 
     const handleAdminLogin = async (e) => {
@@ -1256,9 +1256,19 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       });
 
       if (res.ok) {
+        const savedCol = await res.json().catch(() => null);
         setShowCollectionModal(false);
         setEditingCollection(null);
         setCollectionForm({ name: '', description: '', image_url: '', category_id: '', product_ids: [] });
+        if (savedCol && savedCol.id) {
+          setCollections(prev => {
+            const exists = prev.some(c => c.id === savedCol.id);
+            if (exists) {
+              return prev.map(c => c.id === savedCol.id ? { ...c, ...savedCol, image_url: savedCol.image_url || collectionForm.image_url } : c);
+            }
+            return [savedCol, ...prev];
+          });
+        }
         await fetchAdminData();
         if (showToast) showToast('success', isEdit ? 'Collection Updated' : 'Collection Created', `Collection "${collectionForm.name}" saved successfully.`);
       } else {
