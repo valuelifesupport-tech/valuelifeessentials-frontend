@@ -7020,10 +7020,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                     <div>
                       <label className="block text-emerald-400 font-bold mb-1 text-xs">Price INR (₹) *</label>
                       <input 
-                        type="number" required placeholder="₹ 0.00"
+                        type="number" min="0" required placeholder="₹ 0.00"
                         value={productForm.price_inr ?? ''}
+                        onWheel={(e) => e.target.blur()}
                         onChange={(e) => {
-                          const val = e.target.value === '' ? '' : Number(e.target.value);
+                          const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                           const autoUsd = (val !== '' && val > 0) ? Number((val / 95).toFixed(2)) : '';
                           setProductForm(prev => ({ 
                             ...prev, 
@@ -7039,10 +7040,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                     <div>
                       <label className="block text-blue-400 font-bold mb-1 text-xs">Price USD ($) *</label>
                       <input 
-                        type="number" required placeholder="$ 0.00" step="0.01"
+                        type="number" min="0" required placeholder="$ 0.00" step="0.01"
                         value={productForm.price_usd ?? ''}
+                        onWheel={(e) => e.target.blur()}
                         onChange={(e) => {
-                          const val = e.target.value === '' ? '' : Number(e.target.value);
+                          const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                           setProductForm(prev => ({ 
                             ...prev, 
                             price_usd: val, 
@@ -7058,10 +7060,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                     <div>
                       <label className="block text-slate-300 font-medium mb-1 text-xs">Compare-at Price INR (₹)</label>
                       <input 
-                        type="number" placeholder="₹ Original / MRP (INR)"
+                        type="number" min="0" placeholder="₹ Original / MRP (INR)"
                         value={productForm.compare_price_inr ?? ''}
+                        onWheel={(e) => e.target.blur()}
                         onChange={(e) => {
-                          const val = e.target.value === '' ? '' : Number(e.target.value);
+                          const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                           const autoUsd = (val !== '' && val > 0) ? Number((val / 95).toFixed(2)) : '';
                           setProductForm(prev => ({ 
                             ...prev, 
@@ -7075,10 +7078,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                     <div>
                       <label className="block text-blue-300 font-medium mb-1 text-xs">Compare-at Price USD ($)</label>
                       <input 
-                        type="number" placeholder="$ Original / MRP (USD)" step="0.01"
+                        type="number" min="0" placeholder="$ Original / MRP (USD)" step="0.01"
                         value={productForm.compare_price_usd ?? ''}
+                        onWheel={(e) => e.target.blur()}
                         onChange={(e) => {
-                          const val = e.target.value === '' ? '' : Number(e.target.value);
+                          const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                           setProductForm(prev => ({ ...prev, compare_price_usd: val }));
                         }}
                         className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-blue-200 text-sm"
@@ -7090,10 +7094,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                     <div>
                       <label className="block text-slate-400 mb-1 text-xs">Cost per item INR (₹)</label>
                       <input 
-                        type="number" placeholder="₹ Supplier Cost (INR)"
+                        type="number" min="0" placeholder="₹ Supplier Cost (INR)"
                         value={productForm.cost_per_item_inr ?? ''}
+                        onWheel={(e) => e.target.blur()}
                         onChange={(e) => {
-                          const val = e.target.value === '' ? '' : Number(e.target.value);
+                          const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                           const autoUsd = (val !== '' && val > 0) ? Number((val / 95).toFixed(2)) : '';
                           setProductForm(prev => ({ 
                             ...prev, 
@@ -7107,10 +7112,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                     <div>
                       <label className="block text-blue-400/80 mb-1 text-xs">Cost per item USD ($)</label>
                       <input 
-                        type="number" placeholder="$ Supplier Cost (USD)" step="0.01"
+                        type="number" min="0" placeholder="$ Supplier Cost (USD)" step="0.01"
                         value={productForm.cost_per_item_usd ?? ''}
+                        onWheel={(e) => e.target.blur()}
                         onChange={(e) => {
-                          const val = e.target.value === '' ? '' : Number(e.target.value);
+                          const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                           setProductForm(prev => ({ ...prev, cost_per_item_usd: val }));
                         }}
                         className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-blue-300 text-xs"
@@ -7216,10 +7222,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                               </td>
                               <td className="p-2.5">
                                 <input 
-                                  type="number" value={v.price_inr !== undefined ? v.price_inr : (v.price || '')} 
+                                  type="number" min="0" value={v.price_inr !== undefined ? v.price_inr : (v.price || '')} 
+                                  onWheel={(e) => e.target.blur()}
                                   onChange={(e) => {
                                     const updated = [...productForm.variants];
-                                    const pVal = e.target.value === '' ? '' : Number(e.target.value);
+                                    const pVal = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                                     const autoUsd = (pVal !== '' && pVal > 0) ? Number((pVal / 95).toFixed(2)) : '';
                                     updated[vIdx] = { ...updated[vIdx], price_inr: pVal, price: pVal, discount_inr: pVal, price_usd: autoUsd, discount_usd: autoUsd };
                                     setProductForm({ ...productForm, variants: updated });
@@ -7229,10 +7236,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                               </td>
                               <td className="p-2.5">
                                 <input 
-                                  type="number" step="0.01" value={v.price_usd !== undefined ? v.price_usd : ''} 
+                                  type="number" min="0" step="0.01" value={v.price_usd !== undefined ? v.price_usd : ''} 
+                                  onWheel={(e) => e.target.blur()}
                                   onChange={(e) => {
                                     const updated = [...productForm.variants];
-                                    const pVal = e.target.value === '' ? '' : Number(e.target.value);
+                                    const pVal = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                                     updated[vIdx] = { ...updated[vIdx], price_usd: pVal, discount_usd: pVal };
                                     setProductForm({ ...productForm, variants: updated });
                                   }}
@@ -7241,10 +7249,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                               </td>
                               <td className="p-2.5">
                                 <input 
-                                  type="number" value={v.compare_price_inr !== undefined ? v.compare_price_inr : ''} 
+                                  type="number" min="0" value={v.compare_price_inr !== undefined ? v.compare_price_inr : ''} 
+                                  onWheel={(e) => e.target.blur()}
                                   onChange={(e) => {
                                     const updated = [...productForm.variants];
-                                    const pVal = e.target.value === '' ? '' : Number(e.target.value);
+                                    const pVal = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                                     const autoUsd = (pVal !== '' && pVal > 0) ? Number((pVal / 95).toFixed(2)) : '';
                                     updated[vIdx] = { ...updated[vIdx], compare_price_inr: pVal, compare_price_usd: autoUsd };
                                     setProductForm({ ...productForm, variants: updated });
@@ -7255,10 +7264,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                               </td>
                               <td className="p-2.5">
                                 <input 
-                                  type="number" step="0.01" value={v.compare_price_usd !== undefined ? v.compare_price_usd : ''} 
+                                  type="number" min="0" step="0.01" value={v.compare_price_usd !== undefined ? v.compare_price_usd : ''} 
+                                  onWheel={(e) => e.target.blur()}
                                   onChange={(e) => {
                                     const updated = [...productForm.variants];
-                                    const pVal = e.target.value === '' ? '' : Number(e.target.value);
+                                    const pVal = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                                     updated[vIdx] = { ...updated[vIdx], compare_price_usd: pVal };
                                     setProductForm({ ...productForm, variants: updated });
                                   }}
@@ -7268,10 +7278,12 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                               </td>
                               <td className="p-2.5">
                                 <input 
-                                  type="number" value={v.stock !== undefined ? v.stock : 50} 
+                                  type="number" min="0" value={v.stock !== undefined ? v.stock : 50} 
+                                  onWheel={(e) => e.target.blur()}
                                   onChange={(e) => {
                                     const updated = [...productForm.variants];
-                                    updated[vIdx] = { ...updated[vIdx], stock: Number(e.target.value) };
+                                    const sVal = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
+                                    updated[vIdx] = { ...updated[vIdx], stock: sVal };
                                     setProductForm({ ...productForm, variants: updated });
                                   }}
                                   className="w-16 p-1.5 bg-slate-800 border border-slate-700 rounded text-white font-bold"
@@ -7312,10 +7324,11 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                       <div>
                         <label className="block text-[10px] text-emerald-400 mb-0.5 font-bold">Price INR (₹)</label>
                         <input 
-                          type="number" placeholder="₹ Price"
+                          type="number" min="0" placeholder="₹ Price"
                           value={newVariantForm.price_inr || ''}
+                          onWheel={(e) => e.target.blur()}
                           onChange={(e) => {
-                            const val = e.target.value === '' ? '' : Number(e.target.value);
+                            const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                             const autoUsd = (val !== '' && val > 0) ? Number((val / 95).toFixed(2)) : '';
                             setNewVariantForm(prev => ({ ...prev, price_inr: val, price_usd: autoUsd }));
                           }}
@@ -7325,19 +7338,24 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                       <div>
                         <label className="block text-[10px] text-blue-400 mb-0.5 font-bold">Price USD ($)</label>
                         <input 
-                          type="number" step="0.01" placeholder="$ Price"
+                          type="number" min="0" step="0.01" placeholder="$ Price"
                           value={newVariantForm.price_usd || ''}
-                          onChange={(e) => setNewVariantForm({ ...newVariantForm, price_usd: e.target.value })}
+                          onWheel={(e) => e.target.blur()}
+                          onChange={(e) => {
+                            const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
+                            setNewVariantForm(prev => ({ ...prev, price_usd: val }));
+                          }}
                           className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-blue-400 font-bold text-xs"
                         />
                       </div>
                       <div>
                         <label className="block text-[10px] text-slate-400 mb-0.5 font-bold">Compare INR (₹)</label>
                         <input 
-                          type="number" placeholder="₹ MRP"
+                          type="number" min="0" placeholder="₹ MRP"
                           value={newVariantForm.compare_price_inr || ''}
+                          onWheel={(e) => e.target.blur()}
                           onChange={(e) => {
-                            const val = e.target.value === '' ? '' : Number(e.target.value);
+                            const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                             const autoUsd = (val !== '' && val > 0) ? Number((val / 95).toFixed(2)) : '';
                             setNewVariantForm(prev => ({ ...prev, compare_price_inr: val, compare_price_usd: autoUsd }));
                           }}
@@ -7347,9 +7365,13 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                       <div>
                         <label className="block text-[10px] text-blue-300 mb-0.5 font-bold">Compare USD ($)</label>
                         <input 
-                          type="number" step="0.01" placeholder="$ MRP"
+                          type="number" min="0" step="0.01" placeholder="$ MRP"
                           value={newVariantForm.compare_price_usd || ''}
-                          onChange={(e) => setNewVariantForm({ ...newVariantForm, compare_price_usd: e.target.value })}
+                          onWheel={(e) => e.target.blur()}
+                          onChange={(e) => {
+                            const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
+                            setNewVariantForm(prev => ({ ...prev, compare_price_usd: val }));
+                          }}
                           className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-blue-300 text-xs"
                         />
                       </div>
@@ -7359,9 +7381,13 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                       <div className="w-32">
                         <label className="block text-[10px] text-slate-400 mb-0.5 font-bold">Stock Qty</label>
                         <input 
-                          type="number" placeholder="100"
+                          type="number" min="0" placeholder="100"
                           value={newVariantForm.stock || ''}
-                          onChange={(e) => setNewVariantForm({ ...newVariantForm, stock: e.target.value })}
+                          onWheel={(e) => e.target.blur()}
+                          onChange={(e) => {
+                            const sVal = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
+                            setNewVariantForm(prev => ({ ...prev, stock: sVal }));
+                          }}
                           className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs font-bold"
                         />
                       </div>
@@ -8289,9 +8315,10 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                   <div>
                     <label className="block text-[10px] font-bold text-emerald-400 mb-1">Offer / Sale Price INR (₹) *</label>
                     <input 
-                      type="number" required placeholder="Offer Price (e.g. 249)"
+                      type="number" min="0" required placeholder="Offer Price (e.g. 249)"
                       value={variantForm.discount_inr || ''}
-                      onChange={(e) => setVariantForm({ ...variantForm, discount_inr: Number(e.target.value) })}
+                      onWheel={(e) => e.target.blur()}
+                      onChange={(e) => setVariantForm({ ...variantForm, discount_inr: Math.max(0, Number(e.target.value)) })}
                       className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold"
                     />
                   </div>
@@ -8299,9 +8326,10 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 mb-1">Compare At / MRP (₹)</label>
                     <input 
-                      type="number" placeholder="MRP Price (e.g. 349)"
+                      type="number" min="0" placeholder="MRP Price (e.g. 349)"
                       value={variantForm.price_inr || ''}
-                      onChange={(e) => setVariantForm({ ...variantForm, price_inr: Number(e.target.value) })}
+                      onWheel={(e) => e.target.blur()}
+                      onChange={(e) => setVariantForm({ ...variantForm, price_inr: Math.max(0, Number(e.target.value)) })}
                       className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300"
                     />
                   </div>
@@ -8311,9 +8339,10 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                   <div>
                     <label className="block text-[10px] font-bold text-blue-400 mb-1">Offer USD ($) *</label>
                     <input 
-                      type="number" required placeholder="Offer USD"
+                      type="number" min="0" step="0.01" required placeholder="Offer USD"
                       value={variantForm.discount_usd || ''}
-                      onChange={(e) => setVariantForm({ ...variantForm, discount_usd: Number(e.target.value) })}
+                      onWheel={(e) => e.target.blur()}
+                      onChange={(e) => setVariantForm({ ...variantForm, discount_usd: Math.max(0, Number(e.target.value)) })}
                       className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
                     />
                   </div>
@@ -8321,9 +8350,10 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 mb-1">Compare USD ($)</label>
                     <input 
-                      type="number" placeholder="MRP USD"
+                      type="number" min="0" step="0.01" placeholder="MRP USD"
                       value={variantForm.price_usd || ''}
-                      onChange={(e) => setVariantForm({ ...variantForm, price_usd: Number(e.target.value) })}
+                      onWheel={(e) => e.target.blur()}
+                      onChange={(e) => setVariantForm({ ...variantForm, price_usd: Math.max(0, Number(e.target.value)) })}
                       className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300"
                     />
                   </div>
@@ -8331,9 +8361,10 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                   <div>
                     <label className="block text-[10px] font-bold text-slate-300 mb-1">Stock Qty *</label>
                     <input 
-                      type="number" required placeholder="Stock"
+                      type="number" min="0" required placeholder="Stock"
                       value={variantForm.stock || ''}
-                      onChange={(e) => setVariantForm({ ...variantForm, stock: Number(e.target.value) })}
+                      onWheel={(e) => e.target.blur()}
+                      onChange={(e) => setVariantForm({ ...variantForm, stock: Math.max(0, Number(e.target.value)) })}
                       className="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold"
                     />
                   </div>
