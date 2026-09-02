@@ -2618,6 +2618,10 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                           <img 
                             src={resolveImgUrl(col.image_url)} 
                             alt={col.name}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=800&q=80';
+                            }}
                             className="w-full h-full object-cover" 
                           />
                         ) : (
