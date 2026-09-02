@@ -1231,6 +1231,9 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
         setCategoryForm({ name: '', description: '', image_url: '', icon: '' });
         await fetchAdminData();
         if (showToast) showToast('success', isEdit ? 'Category Updated' : 'Category Created', `Category "${categoryForm.name}" saved successfully.`);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        if (showToast) showToast('error', 'Category Save Failed', errData.error || `Server returned error (${res.status})`);
       }
     } catch (err) {
       if (showToast) showToast('error', 'Category Save Failed', err.message);
@@ -1258,6 +1261,9 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
         setCollectionForm({ name: '', description: '', image_url: '', category_id: '', product_ids: [] });
         await fetchAdminData();
         if (showToast) showToast('success', isEdit ? 'Collection Updated' : 'Collection Created', `Collection "${collectionForm.name}" saved successfully.`);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        if (showToast) showToast('error', 'Failed to Save Collection', errData.error || `Server returned error (${res.status})`);
       }
     } catch (err) {
       if (showToast) showToast('error', 'Failed to Save Collection', err.message);
