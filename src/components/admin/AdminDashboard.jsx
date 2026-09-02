@@ -680,9 +680,18 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
       safeFetchJson('/api/settings')
     ]);
 
-    if (prods) setProducts(prods);
-    if (cats) setCategories(cats);
-    if (colls) setCollections(colls);
+    if (prods) {
+      const seen = new Set();
+      setProducts(prods.filter(p => { const k = p.id; if (seen.has(k)) return false; seen.add(k); return true; }));
+    }
+    if (cats) {
+      const seen = new Set();
+      setCategories(cats.filter(c => { const k = c.id; if (seen.has(k)) return false; seen.add(k); return true; }));
+    }
+    if (colls) {
+      const seen = new Set();
+      setCollections(colls.filter(c => { const k = c.id; if (seen.has(k)) return false; seen.add(k); return true; }));
+    }
     if (ords) setOrders(ords);
     if (sets) {
       setSettings(sets);
@@ -2523,8 +2532,8 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {categories.map(cat => (
-                  <div key={cat.id} className="p-4 border border-slate-800 rounded-xl bg-slate-850 space-y-3">
+                {categories.map((cat, idx) => (
+                  <div key={cat.id ? `cat-${cat.id}-${idx}` : `cat-${idx}`} className="p-4 border border-slate-800 rounded-xl bg-slate-850 space-y-3">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2 font-bold text-white text-sm">
                         <span>{cat.icon || '🌿'}</span> <span>{cat.name}</span>
