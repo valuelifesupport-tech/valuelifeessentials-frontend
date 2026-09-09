@@ -7286,7 +7286,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                           setProductForm(prev => ({ 
                             ...prev, 
                             price_inr: val, 
-                            discount_inr: prev.discount_inr ? prev.discount_inr : val,
+                            discount_inr: val,
                             price_usd: autoUsd,
                             discount_usd: autoUsd
                           }));
@@ -7305,7 +7305,7 @@ export default function AdminDashboard({ onExitAdmin, showToast, sectionsConfig:
                           setProductForm(prev => ({ 
                             ...prev, 
                             price_usd: val, 
-                            discount_usd: prev.discount_usd ? prev.discount_usd : val 
+                            discount_usd: val 
                           }));
                         }}
                         className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold text-blue-400 text-sm"
