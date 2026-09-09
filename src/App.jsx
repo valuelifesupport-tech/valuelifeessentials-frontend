@@ -3,7 +3,6 @@ import Header from './components/layout/Header';
 import CartDrawer from './components/cart/CartDrawer';
 import WishlistDrawer from './components/cart/WishlistDrawer';
 import ToastNotification from './components/common/ToastNotification';
-const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 import ProductDetailPage from './components/product/ProductDetailPage';
 import PageView from './components/sections/PageView';
 import HeroSection from './components/sections/HeroSection';
@@ -712,17 +711,35 @@ export default function App() {
 
   if (route.view === 'admin') {
     return (
-      <Suspense fallback={<BrandLoader text="Loading Admin Dashboard..." fullScreen={true} />}>
-        <ToastNotification toast={toast} onClose={() => setToast(null)} />
-        <AdminDashboard 
-          onExitAdmin={() => navigateTo('/', { view: 'store', slug: null, category: null, collection: null })} 
-          showToast={showToast}
-          sectionsConfig={sectionsConfig}
-          onUpdateSectionsConfig={setSectionsConfig}
-          settings={settings}
-          onUpdateSettings={setSettings}
-        />
-      </Suspense>
+      <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-6 shadow-2xl">
+          <div className="w-16 h-16 bg-emerald-950 border border-emerald-600/30 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-inner">
+            🛡️
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-white font-['Outfit']">Admin Portal</h2>
+            <p className="text-xs text-slate-400 font-medium">
+              The ValueLife Essentials Admin Dashboard is hosted as a dedicated application.
+            </p>
+          </div>
+          <div className="space-y-3 pt-2">
+            <a 
+              href="https://admin.valuelifeessentials.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs py-3.5 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 block"
+            >
+              Open Dedicated Admin Portal →
+            </a>
+            <button
+              onClick={() => navigateTo('/', { view: 'store', slug: null, category: null, collection: null })}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-3 px-6 rounded-xl transition-all block cursor-pointer"
+            >
+              ← Return to Storefront
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 
