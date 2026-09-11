@@ -57,7 +57,7 @@ export default function EditorialPromoBanner({ navigateTo }) {
               {/* Composition Image */}
               <div className="relative w-full max-w-md aspect-[16/10] rounded-2xl overflow-hidden shadow-xl border-4 border-white">
                 <img
-                  src="https://images.unsplash.com/photo-1608248597359-bb51cb7e44be?auto=format&fit=crop&w=800&q=80"
+                  src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80"
                   alt="ValueLife Natural Wellness Products"
                   className="w-full h-full object-cover"
                 />

@@ -21,7 +21,7 @@ export default function InstagramFeedSection() {
       title: 'Edible Seeds Selection'
     },
     {
-      img: 'https://images.unsplash.com/photo-1608248597359-bb51cb7e44be?auto=format&fit=crop&w=400&q=80',
+      img: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=400&q=80',
       title: 'Natural Wellness Essentials'
     },
     {
