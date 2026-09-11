@@ -1,30 +1,22 @@
-import React from 'react';
-import { Star, CheckCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Star, CheckCircle, ShieldCheck, HeartHandshake, Award } from 'lucide-react';
+import { getApiUrl } from '../../api/config';
 
 export default function TestimonialsSection() {
-  const testimonials = [
-    {
-      name: 'Priya Sharma',
-      location: 'Mumbai, India',
-      rating: 5,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      comment: 'Amazing quality products! ValueLife has become my go-to store for natural essentials. The chia seeds and turmeric are exceptionally pure.'
-    },
-    {
-      name: 'Rahul Mehta',
-      location: 'Bengaluru, India',
-      rating: 5,
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-      comment: 'Fast delivery and great packaging. Really happy with my purchase. The cold-pressed oils and herbal tea-cuts exceeded my expectations!'
-    },
-    {
-      name: 'Sneha Jain',
-      location: 'Indore, India',
-      rating: 5,
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80',
-      comment: 'Love the product range and customer service. Highly recommended for anyone transitioning to a clean, organic daily lifestyle!'
-    }
-  ];
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    // Fetch live approved customer reviews from database
+    fetch(getApiUrl('/api/admin/reviews'))
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const approved = data.filter(r => r.status === 'APPROVED');
+          setReviews(approved.slice(0, 3));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <section className="py-14 bg-[#fbf9f5] border-t border-b border-gray-200/70" data-reticle-target="testimonials-section">
@@ -33,52 +25,66 @@ export default function TestimonialsSection() {
         {/* Centered Heading */}
         <div className="text-center max-w-2xl mx-auto mb-12">
           <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-950">
-            What Our Customers Say
+            {reviews.length > 0 ? 'What Our Customers Say' : 'Our Quality Commitment'}
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 mt-2">
-            Real experiences from thousands of happy wellness enthusiasts across India
+            {reviews.length > 0
+              ? 'Real customer experiences verified directly from our store'
+              : 'Committed to 100% pure botanical health, transparent sourcing and family wellness'}
           </p>
         </div>
 
-        {/* 3 Testimonial Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((rev, idx) => (
-            <div
-              key={idx}
-              className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
-            >
-              {/* Stars */}
-              <div className="flex items-center gap-1 text-amber-400 mb-4">
-                {[...Array(rev.rating)].map((_, i) => (
-                  <Star key={i} size={15} fill="currentColor" stroke="none" />
-                ))}
-              </div>
+        {reviews.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {reviews.map((rev, idx) => (
+              <div
+                key={rev.id || idx}
+                className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:border-emerald-500/40 transition-all duration-300 flex flex-col justify-between"
+              >
+                <div className="flex items-center gap-1 text-amber-400 mb-4">
+                  {[...Array(Number(rev.rating || 5))].map((_, i) => (
+                    <Star key={i} size={15} fill="currentColor" stroke="none" />
+                  ))}
+                </div>
 
-              {/* Comment */}
-              <p className="text-sm text-gray-700 leading-relaxed italic mb-6">
-                "{rev.comment}"
-              </p>
+                <p className="text-sm text-gray-700 leading-relaxed italic mb-6">
+                  "{rev.comment || rev.title}"
+                </p>
 
-              {/* User Profile */}
-              <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                <img
-                  src={rev.avatar}
-                  alt={rev.name}
-                  className="w-11 h-11 rounded-full object-cover border-2 border-emerald-100 shrink-0"
-                />
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h4 className="text-xs font-bold text-gray-900">{rev.name}</h4>
-                    <CheckCircle size={12} className="text-emerald-600" />
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-900 font-bold flex items-center justify-center text-sm">
+                    {rev.user_name ? rev.user_name.charAt(0).toUpperCase() : 'U'}
                   </div>
-                  <span className="text-[10px] text-gray-400 block font-medium">
-                    Verified Customer • {rev.location}
-                  </span>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-xs text-gray-900">{rev.user_name}</span>
+                      <CheckCircle size={12} className="text-emerald-600" />
+                    </div>
+                    <span className="text-[11px] text-gray-400">Verified Customer</span>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center">
+              <ShieldCheck size={36} className="text-[#164e3f] mb-3" />
+              <h3 className="font-bold text-sm text-gray-900 mb-1">100% Lab Verified</h3>
+              <p className="text-xs text-gray-500">Every single harvest is tested for chemical purity, zero additives and authentic botanical origin.</p>
             </div>
-          ))}
-        </div>
+            <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center">
+              <HeartHandshake size={36} className="text-[#164e3f] mb-3" />
+              <h3 className="font-bold text-sm text-gray-900 mb-1">Direct Farmer Sourcing</h3>
+              <p className="text-xs text-gray-500">We partner directly with organic farmers across India, eliminating middlemen for peak freshness.</p>
+            </div>
+            <div className="bg-white border border-gray-200/90 rounded-2xl p-6 shadow-sm flex flex-col items-center text-center">
+              <Award size={36} className="text-[#164e3f] mb-3" />
+              <h3 className="font-bold text-sm text-gray-900 mb-1">Satisfaction Guarantee</h3>
+              <p className="text-xs text-gray-500">Enjoy hassle-free returns within 7 days if you are not completely satisfied with your order.</p>
+            </div>
+          </div>
+        )}
 
       </div>
     </section>

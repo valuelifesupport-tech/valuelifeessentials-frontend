@@ -1,76 +1,35 @@
 import React, { useRef } from 'react';
-import { ChevronLeft, ChevronRight, ArrowRight, ShoppingBag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShoppingBag, ArrowRight } from 'lucide-react';
 import { resolveImgUrl } from '../../api/config';
 
-export default function BestSellersSection({
-  products = [],
-  currencySymbol = '₹',
-  handleAddToCart,
-  navigateTo
+export default function BestSellersSection({ 
+  products = [], 
+  onAddToCart, 
+  navigateTo,
+  currencySymbol = '₹'
 }) {
   const scrollRef = useRef(null);
 
-  // Curated showcase matching Section 7 of mockup
-  const sampleBestSellers = [
-    {
-      id: 201,
-      title: 'Chia Seeds',
-      slug: 'chia-seeds',
-      pack: '250g',
-      price: 259,
-      image_url: 'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?auto=format&fit=crop&w=500&q=80'
-    },
-    {
-      id: 202,
-      title: 'Organic Almonds',
-      slug: 'organic-almonds',
-      pack: '250g',
-      price: 349,
-      image_url: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?auto=format&fit=crop&w=500&q=80'
-    },
-    {
-      id: 203,
-      title: 'Multivitamin',
-      slug: 'multivitamin',
-      pack: '60 Capsules',
-      price: 499,
-      image_url: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=500&q=80'
-    },
-    {
-      id: 204,
-      title: 'Flax Seeds',
-      slug: 'flax-seeds',
-      pack: '250g',
-      price: 199,
-      image_url: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=500&q=80'
-    },
-    {
-      id: 205,
-      title: 'Peanut Butter',
-      slug: 'peanut-butter',
-      pack: '200g',
-      price: 249,
-      image_url: 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=500&q=80'
-    }
-  ];
-
-  // If real database products exist, use them
+  // Real products from database only
   const displayItems = (products && products.length > 0)
-    ? products.slice(0, 5).map((p, idx) => ({
+    ? products.map((p) => ({
         id: p.id,
-        title: p.title,
+        title: p.title || p.name,
         slug: p.slug || `product-${p.id}`,
         pack: (p.variants && p.variants[0]?.variant_name) || 'Standard Pack',
-        price: p.price_inr || p.price || 249,
-        image_url: p.thumbnail || p.image_url || sampleBestSellers[idx % sampleBestSellers.length].image_url
+        price: Number(p.price_inr || p.price || 0),
+        image_url: resolveImgUrl(p.thumbnail || p.image_url),
+        rawProduct: p
       }))
-    : sampleBestSellers;
+    : [];
 
   const scroll = (direction) => {
     if (!scrollRef.current) return;
     const offset = direction === 'left' ? -260 : 260;
     scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
   };
+
+  if (displayItems.length === 0) return null; // Don't show empty block if no products
 
   return (
     <section className="py-12 bg-white" data-reticle-target="best-sellers-section">
@@ -87,31 +46,30 @@ export default function BestSellersSection({
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => navigateTo && navigateTo('/bestsellers', { view: 'bestsellers' })}
-              className="text-xs font-bold text-[#164e3f] hover:text-emerald-800 flex items-center gap-1 transition-colors cursor-pointer"
+              className="text-xs font-bold text-[#164e3f] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <span>View All</span>
               <ArrowRight size={13} />
             </button>
 
-            {/* Carousel Arrows */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => scroll('left')}
-                className="w-9 h-9 rounded-full border border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-900 flex items-center justify-center transition-colors cursor-pointer"
-                title="Scroll Left"
+                className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                aria-label="Scroll left"
               >
                 <ChevronLeft size={16} />
               </button>
               <button
                 type="button"
                 onClick={() => scroll('right')}
-                className="w-9 h-9 rounded-full border border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-900 flex items-center justify-center transition-colors cursor-pointer"
-                title="Scroll Right"
+                className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                aria-label="Scroll right"
               >
                 <ChevronRight size={16} />
               </button>
@@ -119,62 +77,47 @@ export default function BestSellersSection({
           </div>
         </div>
 
-        {/* Horizontal Carousel */}
-        <div
+        {/* Carousel Grid */}
+        <div 
           ref={scrollRef}
-          className="flex items-stretch gap-5 overflow-x-auto no-scrollbar pb-4 pt-1 scroll-smooth"
+          className="flex gap-4 overflow-x-auto pb-4 scroll-smooth no-scrollbar"
         >
           {displayItems.map((item) => (
             <div
               key={item.id}
-              className="min-w-[210px] sm:min-w-[225px] flex-1 bg-white border border-gray-200/90 rounded-2xl p-4 flex flex-col justify-between group hover:shadow-xl hover:border-emerald-500/40 transition-all duration-300 relative"
+              className="min-w-[210px] sm:min-w-[220px] max-w-[220px] bg-white border border-gray-200/80 hover:border-emerald-500/50 rounded-2xl p-3 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between shrink-0"
             >
-              {/* Bestseller Badge Pill (Mockup Section 7) */}
-              <div className="absolute top-3 left-3 z-10">
-                <span className="bg-[#2e7d32] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+              <div className="relative aspect-square rounded-xl overflow-hidden bg-[#faf8f5] mb-2.5">
+                <span className="absolute top-2 left-2 z-10 bg-emerald-800 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider">
                   Bestseller
                 </span>
-              </div>
-
-              {/* Product Image */}
-              <div 
-                onClick={() => navigateTo && navigateTo(`/products/${item.slug}`, { view: 'pdp', slug: item.slug })}
-                className="w-full aspect-square rounded-xl overflow-hidden bg-[#faf8f5] mb-3 border border-gray-100 p-2 cursor-pointer"
-              >
                 <img
-                  src={resolveImgUrl(item.image_url)}
+                  src={item.image_url}
                   alt={item.title}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?auto=format&fit=crop&w=500&q=80';
-                  }}
+                  onClick={() => navigateTo && navigateTo(`/product/${item.slug}`, { view: 'product', slug: item.slug })}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 cursor-pointer"
                 />
               </div>
 
-              {/* Details */}
-              <div className="space-y-1">
+              <div>
                 <h3 
-                  onClick={() => navigateTo && navigateTo(`/products/${item.slug}`, { view: 'pdp', slug: item.slug })}
-                  className="text-xs sm:text-sm font-bold text-gray-900 group-hover:text-[#164e3f] transition-colors cursor-pointer line-clamp-1"
+                  onClick={() => navigateTo && navigateTo(`/product/${item.slug}`, { view: 'product', slug: item.slug })}
+                  className="font-bold text-xs text-gray-900 line-clamp-1 hover:text-[#164e3f] cursor-pointer transition-colors"
                 >
                   {item.title}
                 </h3>
-                <span className="text-[11px] text-gray-400 font-medium block">
-                  {item.pack}
-                </span>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-sm font-extrabold text-gray-950">
+                <p className="text-[11px] text-gray-400 mt-0.5">{item.pack}</p>
+
+                <div className="flex items-center justify-between mt-2 pt-1 border-t border-gray-100">
+                  <span className="text-sm font-extrabold text-gray-950 font-mono">
                     {currencySymbol}{item.price}
                   </span>
+
                   <button
                     type="button"
-                    onClick={() => handleAddToCart && handleAddToCart({
-                      ...item,
-                      price_inr: item.price,
-                      discount_inr: item.price
-                    })}
-                    className="w-8 h-8 rounded-full bg-emerald-50 hover:bg-[#164e3f] text-[#164e3f] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-                    title="Add to Cart"
+                    onClick={() => onAddToCart && onAddToCart(item.rawProduct || item)}
+                    className="p-1.5 rounded-lg bg-emerald-50 text-[#164e3f] hover:bg-[#164e3f] hover:text-white transition-colors cursor-pointer"
+                    aria-label="Add to Cart"
                   >
                     <ShoppingBag size={14} />
                   </button>
