@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, User, Menu, X, ChevronDown, Search } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShoppingBag, User, Heart, Menu, X, Search } from 'lucide-react';
 import AnnouncementBar from './header/AnnouncementBar';
+import SearchForm from './header/SearchForm';
+import NavMegaMenu from './header/NavMegaMenu';
 import MobileNavMenu from './header/MobileNavMenu';
 
 export default function Header({ 
   currency, 
   setCurrency, 
   currencySymbol, 
-  cartCount, 
-  wishlistCount, 
+  cartCount = 0, 
+  wishlistCount = 0, 
   onOpenCart, 
   onOpenWishlist, 
   currentUser, 
@@ -18,8 +20,11 @@ export default function Header({
   onSelectCategory, 
   onSelectCollection, 
   onSelectAllProducts, 
+  onSelectOffers,
+  onSelectBestSellers,
+  onSelectNewArrivals,
   navigateTo, 
-  searchQuery, 
+  searchQuery = '', 
   setSearchQuery, 
   onSearchSubmit, 
   onGoHome, 
@@ -29,33 +34,6 @@ export default function Header({
   showToast 
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const closeTimeoutRef = useRef(null);
-
-  const handleCategoriesMouseEnter = () => {
-    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-    setCategoryDropdownOpen(true);
-  };
-
-  const handleCategoriesMouseLeave = () => {
-    closeTimeoutRef.current = setTimeout(() => {
-      setCategoryDropdownOpen(false);
-    }, 250);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setCategoryDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-    };
-  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -64,7 +42,7 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-150" data-reticle-target="main-header">
-      {/* 1. TOP INFO BAR */}
+      {/* 1. TOP ANNOUNCEMENT / INFO BAR */}
       <AnnouncementBar
         sectionsConfig={sectionsConfig}
         settings={settings}
@@ -73,13 +51,13 @@ export default function Header({
         showToast={showToast}
       />
 
-      {/* 2. MAIN NAVIGATION BAR (MATCHING VALUELIFE DESIGN MOCKUP) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
-        {/* Left: Mobile Menu Toggle & Logo */}
+      {/* 2. MAIN HEADER BAR (LOGO, SEARCH & USER ACTIONS) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        {/* Left: Mobile Menu Toggle & Brand Logo */}
         <div className="flex items-center gap-3">
           <button 
             type="button"
-            className="lg:hidden p-1.5 text-gray-700 hover:bg-gray-100 rounded-lg cursor-pointer" 
+            className="md:hidden p-1.5 text-gray-700 hover:bg-gray-100 rounded-lg cursor-pointer" 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             data-reticle-target="mobile-menu-toggle-btn"
           >
@@ -94,7 +72,7 @@ export default function Header({
           >
             <img 
               src="/valuelife_logo.png" 
-              alt="ValueLife" 
+              alt="ValueLife Essentials" 
               className="h-9 sm:h-10 w-auto object-contain shrink-0 group-hover:scale-105 transition-transform" 
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
@@ -111,151 +89,47 @@ export default function Header({
           </a>
         </div>
 
-        {/* Center: Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-7 text-[13px] font-semibold text-gray-800">
-          <button
-            type="button"
-            onClick={onGoHome}
-            className="text-[#164e3f] font-bold hover:text-emerald-700 transition-colors cursor-pointer"
-          >
-            Home
-          </button>
-          <button
-            type="button"
-            onClick={() => onSelectAllProducts ? onSelectAllProducts() : navigateTo('/products', { view: 'all_products' })}
-            className="hover:text-[#164e3f] transition-colors cursor-pointer"
-          >
-            Shop
-          </button>
+        {/* Center: Animated / Interactive Search Bar */}
+        <SearchForm
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onSearchSubmit={onSearchSubmit}
+        />
 
-          {/* Categories Dropdown matching screenshot */}
-          <div
-            className="relative"
-            ref={dropdownRef}
-            onMouseEnter={handleCategoriesMouseEnter}
-            onMouseLeave={handleCategoriesMouseLeave}
-          >
-            <button
-              type="button"
-              onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-              className={`flex items-center gap-1.5 transition-all cursor-pointer text-[13px] font-semibold px-2 py-1 rounded ${
-                categoryDropdownOpen 
-                  ? 'border border-gray-900 text-gray-900 font-bold bg-white shadow-xs' 
-                  : 'hover:text-[#164e3f] text-gray-800'
-              }`}
-              data-reticle-target="nav-categories-trigger-btn"
-            >
-              <span>Categories</span>
-              <ChevronDown
-                size={14}
-                className={`transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180 text-gray-900' : ''}`}
-              />
-            </button>
-
-            {categoryDropdownOpen && (
-              <div 
-                className="absolute left-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100/90 py-3 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
-                data-reticle-target="header-categories-dropdown"
-              >
-                {/* Header */}
-                <div className="px-5 pb-2.5 border-b border-gray-100">
-                  <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-widest">
-                    ALL CATEGORIES
-                  </span>
-                </div>
-
-                {/* Categories List */}
-                <div className="max-h-80 overflow-y-auto py-1 px-1.5 custom-scrollbar">
-                  {(categories || []).map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        setCategoryDropdownOpen(false);
-                        if (onSelectCategory) onSelectCategory(cat.slug || cat.id);
-                        else navigateTo(`/category/${cat.slug || cat.id}`, { view: 'catalog', category: cat.slug || cat.id });
-                      }}
-                      className="w-full text-left px-3.5 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50/90 hover:text-emerald-800 rounded-lg transition-colors flex items-center justify-between cursor-pointer"
-                    >
-                      <span className="truncate pr-2">{cat.name}</span>
-                      {cat.subcategories && cat.subcategories.length > 0 && (
-                        <span className="text-[11px] text-gray-400 font-normal shrink-0">
-                          ({cat.subcategories.length})
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Footer Link */}
-                <div className="pt-2.5 px-4 border-t border-gray-100 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCategoryDropdownOpen(false);
-                      if (onSelectAllProducts) onSelectAllProducts();
-                      else navigateTo('/products', { view: 'all_products' });
-                    }}
-                    className="w-full text-center text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline py-1 cursor-pointer"
-                  >
-                    View All Categories →
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => onOpenPage ? onOpenPage('about-us') : navigateTo('/pages/about-us', { view: 'page', slug: 'about-us' })}
-            className="hover:text-[#164e3f] transition-colors cursor-pointer"
-          >
-            About Us
-          </button>
-          <button
-            type="button"
-            onClick={() => onOpenPage ? onOpenPage('contact-us') : navigateTo('/pages/contact-us', { view: 'page', slug: 'contact-us' })}
-            className="hover:text-[#164e3f] transition-colors cursor-pointer"
-          >
-            Contact
-          </button>
-        </nav>
-
-        {/* Right: Search, Account & Cart */}
-        <div className="flex items-center gap-3 sm:gap-5 flex-1 max-w-md justify-end">
-          {/* Search Pill Input */}
-          <form 
-            onSubmit={handleSearch}
-            className="relative hidden sm:flex flex-1 max-w-xs"
-            data-reticle-target="header-search-form"
-          >
-            <input 
-              type="text" 
-              placeholder="Search for products..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#f4f7f5] hover:bg-[#eef3f0] focus:bg-white border border-gray-200 rounded-full py-2 pl-4 pr-10 text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#164e3f] focus:ring-2 focus:ring-[#164e3f]/15 transition-all"
-              data-reticle-target="header-search-input"
-            />
-            <button
-              type="submit"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#164e3f] transition-colors"
-              title="Search"
-            >
-              <Search size={15} />
-            </button>
-          </form>
-
+        {/* Right: User Account, Wishlist & Cart Actions */}
+        <div className="flex items-center gap-2.5 sm:gap-3.5 flex-shrink-0">
           {/* Account Button */}
           <button 
             type="button"
             onClick={onOpenAuth}
-            className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-[#164e3f] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-[#164e3f] transition-all cursor-pointer p-2 sm:px-3 sm:py-2 rounded-full border border-gray-200 hover:bg-gray-50 shadow-xs"
             title={currentUser ? `Logged in as ${currentUser.name}` : "Sign In / Register"}
             data-reticle-target="header-user-btn"
           >
-            <User size={18} className="text-gray-600" />
-            <span className="hidden md:inline">Account</span>
+            {currentUser ? (
+              <span className="w-5 h-5 rounded-full bg-[#164e3f] text-white text-[10px] font-black flex items-center justify-center font-mono">
+                {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+              </span>
+            ) : (
+              <User size={16} className="text-gray-600" />
+            )}
+            <span className="hidden md:inline font-bold">Account</span>
+          </button>
+
+          {/* Wishlist Button */}
+          <button 
+            type="button"
+            onClick={onOpenWishlist}
+            className="relative p-2 sm:p-2.5 rounded-full hover:bg-gray-100 text-gray-700 transition-colors hidden sm:flex items-center justify-center border border-gray-200 cursor-pointer"
+            title="Wishlist"
+            data-reticle-target="header-wishlist-btn"
+          >
+            <Heart size={18} />
+            {wishlistCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white shadow-xs">
+                {wishlistCount}
+              </span>
+            )}
           </button>
 
           {/* Cart Button */}
@@ -278,14 +152,27 @@ export default function Header({
         </div>
       </div>
 
+      {/* 3. DEDICATED MEGA MENU NAVIGATION BAR (EXACT REFERENCE TO USER DESIGN) */}
+      <NavMegaMenu
+        categories={categories}
+        collections={collections}
+        onGoHome={onGoHome}
+        onSelectCategory={onSelectCategory}
+        onSelectCollection={onSelectCollection}
+        onSelectAllProducts={onSelectAllProducts}
+        onSelectOffers={onSelectOffers}
+        onSelectBestSellers={onSelectBestSellers}
+        onSelectNewArrivals={onSelectNewArrivals}
+        navigateTo={navigateTo}
+        onOpenPage={onOpenPage}
+      />
 
-
-      {/* Mobile Search Bar for small devices */}
-      <div className="sm:hidden px-4 pb-3">
+      {/* 4. MOBILE SEARCH BAR FOR SMALL VIEWPORTS */}
+      <div className="md:hidden px-4 pb-2.5 pt-1">
         <form onSubmit={handleSearch} className="relative w-full">
           <input 
             type="text" 
-            placeholder="Search for products..." 
+            placeholder="Search organic products..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#f4f7f5] border border-gray-200 rounded-full py-2 pl-4 pr-10 text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#164e3f]"
@@ -296,7 +183,7 @@ export default function Header({
         </form>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* 5. MOBILE DRAWER NAVIGATION MENU */}
       <MobileNavMenu
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
