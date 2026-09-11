@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ShoppingBag, User, Menu, X, ChevronDown, Search } from 'lucide-react';
 import AnnouncementBar from './header/AnnouncementBar';
 import MobileNavMenu from './header/MobileNavMenu';
-import HeaderMegaMenu from './header/HeaderMegaMenu';
 
 export default function Header({ 
   currency, 
@@ -32,7 +31,6 @@ export default function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const megaMenuRef = useRef(null);
   const closeTimeoutRef = useRef(null);
 
   const handleCategoriesMouseEnter = () => {
@@ -48,10 +46,7 @@ export default function Header({
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(e.target) &&
-        megaMenuRef.current && !megaMenuRef.current.contains(e.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setCategoryDropdownOpen(false);
       }
     };
@@ -133,9 +128,9 @@ export default function Header({
             Shop
           </button>
 
-          {/* Categories Mega Menu Trigger */}
+          {/* Categories Dropdown matching screenshot */}
           <div
-            className="relative py-1"
+            className="relative"
             ref={dropdownRef}
             onMouseEnter={handleCategoriesMouseEnter}
             onMouseLeave={handleCategoriesMouseLeave}
@@ -143,17 +138,71 @@ export default function Header({
             <button
               type="button"
               onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-              className={`flex items-center gap-1.5 transition-colors cursor-pointer text-[13px] font-semibold ${
-                categoryDropdownOpen ? 'text-[#164e3f] font-bold' : 'hover:text-[#164e3f]'
+              className={`flex items-center gap-1.5 transition-all cursor-pointer text-[13px] font-semibold px-2 py-1 rounded ${
+                categoryDropdownOpen 
+                  ? 'border border-gray-900 text-gray-900 font-bold bg-white shadow-xs' 
+                  : 'hover:text-[#164e3f] text-gray-800'
               }`}
               data-reticle-target="nav-categories-trigger-btn"
             >
               <span>Categories</span>
               <ChevronDown
                 size={14}
-                className={`transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180 text-[#164e3f]' : ''}`}
+                className={`transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180 text-gray-900' : ''}`}
               />
             </button>
+
+            {categoryDropdownOpen && (
+              <div 
+                className="absolute left-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100/90 py-3 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+                data-reticle-target="header-categories-dropdown"
+              >
+                {/* Header */}
+                <div className="px-5 pb-2.5 border-b border-gray-100">
+                  <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-widest">
+                    ALL CATEGORIES
+                  </span>
+                </div>
+
+                {/* Categories List */}
+                <div className="max-h-80 overflow-y-auto py-1 px-1.5 custom-scrollbar">
+                  {(categories || []).map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        setCategoryDropdownOpen(false);
+                        if (onSelectCategory) onSelectCategory(cat.slug || cat.id);
+                        else navigateTo(`/category/${cat.slug || cat.id}`, { view: 'catalog', category: cat.slug || cat.id });
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50/90 hover:text-emerald-800 rounded-lg transition-colors flex items-center justify-between cursor-pointer"
+                    >
+                      <span className="truncate pr-2">{cat.name}</span>
+                      {cat.subcategories && cat.subcategories.length > 0 && (
+                        <span className="text-[11px] text-gray-400 font-normal shrink-0">
+                          ({cat.subcategories.length})
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Footer Link */}
+                <div className="pt-2.5 px-4 border-t border-gray-100 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategoryDropdownOpen(false);
+                      if (onSelectAllProducts) onSelectAllProducts();
+                      else navigateTo('/products', { view: 'all_products' });
+                    }}
+                    className="w-full text-center text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline py-1 cursor-pointer"
+                  >
+                    View All Categories →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <button
@@ -229,19 +278,7 @@ export default function Header({
         </div>
       </div>
 
-      {/* 3. RICH MULTI-COLUMN MEGA MENU (EXPANDS UNDER HEADER ON CATEGORIES HOVER/CLICK) */}
-      <div ref={megaMenuRef}>
-        <HeaderMegaMenu
-          isOpen={categoryDropdownOpen}
-          onClose={() => setCategoryDropdownOpen(false)}
-          categories={categories}
-          onSelectCategory={onSelectCategory}
-          onSelectAllProducts={onSelectAllProducts}
-          navigateTo={navigateTo}
-          onMouseEnter={handleCategoriesMouseEnter}
-          onMouseLeave={handleCategoriesMouseLeave}
-        />
-      </div>
+
 
       {/* Mobile Search Bar for small devices */}
       <div className="sm:hidden px-4 pb-3">
