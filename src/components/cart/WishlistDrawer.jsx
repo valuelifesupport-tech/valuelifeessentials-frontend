@@ -43,9 +43,12 @@ export default function WishlistDrawer({
             </div>
           ) : (
             wishlistItems.map((item) => {
-              const price = currency === 'INR' ? (item.discount_inr || item.price_inr) : (item.discount_usd || item.price_usd);
+              const itemPrice = item.price !== undefined && item.price !== null
+                ? Number(item.price)
+                : (currency === 'INR' ? (item.discount_inr || item.price_inr || 0) : (item.discount_usd || item.price_usd || 0));
+              const variantName = item.variant_name || item.variant?.variant_name || item.variant?.name;
               return (
-                <div key={item.id} className="flex gap-3 p-3 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div key={item.variant_id ? `${item.id}_${item.variant_id}` : item.id} className="flex gap-3 p-3 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                   <img 
                     src={item.thumbnail || 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=200&q=80'} 
                     alt={item.title}
@@ -55,7 +58,12 @@ export default function WishlistDrawer({
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
                       <h4 className="font-extrabold text-xs sm:text-sm text-gray-900 line-clamp-1">{item.title}</h4>
-                      <span className="font-black text-sm text-[#1b4332] mt-0.5 block">{currencySymbol}{price}</span>
+                      {variantName && (
+                        <span className="inline-block bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-md mt-0.5">
+                          Option: {variantName}
+                        </span>
+                      )}
+                      <span className="font-black text-sm text-[#1b4332] mt-0.5 block">{currencySymbol}{itemPrice}.00</span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 mt-2">
