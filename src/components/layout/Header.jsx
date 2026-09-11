@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ShoppingBag, User, Menu, X, ChevronDown, Search } from 'lucide-react';
 import AnnouncementBar from './header/AnnouncementBar';
 import MobileNavMenu from './header/MobileNavMenu';
+import HeaderMegaMenu from './header/HeaderMegaMenu';
 
 export default function Header({ 
   currency, 
@@ -31,15 +32,34 @@ export default function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const megaMenuRef = useRef(null);
+  const closeTimeoutRef = useRef(null);
+
+  const handleCategoriesMouseEnter = () => {
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    setCategoryDropdownOpen(true);
+  };
+
+  const handleCategoriesMouseLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setCategoryDropdownOpen(false);
+    }, 250);
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+        megaMenuRef.current && !megaMenuRef.current.contains(e.target)
+      ) {
         setCategoryDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
   }, []);
 
   const handleSearch = (e) => {
@@ -113,58 +133,27 @@ export default function Header({
             Shop
           </button>
 
-          {/* Categories Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          {/* Categories Mega Menu Trigger */}
+          <div
+            className="relative py-1"
+            ref={dropdownRef}
+            onMouseEnter={handleCategoriesMouseEnter}
+            onMouseLeave={handleCategoriesMouseLeave}
+          >
             <button
               type="button"
               onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-              className="flex items-center gap-1 hover:text-[#164e3f] transition-colors cursor-pointer"
+              className={`flex items-center gap-1.5 transition-colors cursor-pointer text-[13px] font-semibold ${
+                categoryDropdownOpen ? 'text-[#164e3f] font-bold' : 'hover:text-[#164e3f]'
+              }`}
+              data-reticle-target="nav-categories-trigger-btn"
             >
               <span>Categories</span>
-              <ChevronDown size={14} className={`transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={14}
+                className={`transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180 text-[#164e3f]' : ''}`}
+              />
             </button>
-
-            {categoryDropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                <div className="px-4 pb-2 border-b border-gray-100">
-                  <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-widest">
-                    All Categories
-                  </span>
-                </div>
-                <div className="max-h-80 overflow-y-auto py-1">
-                  {(categories || []).map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        setCategoryDropdownOpen(false);
-                        if (onSelectCategory) onSelectCategory(cat.slug || cat.id);
-                        else navigateTo(`/category/${cat.slug || cat.id}`, { view: 'catalog', category: cat.slug });
-                      }}
-                      className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-[#164e3f] transition-colors flex items-center justify-between"
-                    >
-                      <span>{cat.name}</span>
-                      {cat.subcategories && cat.subcategories.length > 0 && (
-                        <span className="text-[10px] text-gray-400">({cat.subcategories.length})</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-                <div className="pt-2 px-4 border-t border-gray-100">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCategoryDropdownOpen(false);
-                      if (onSelectAllProducts) onSelectAllProducts();
-                      else navigateTo('/products', { view: 'all_products' });
-                    }}
-                    className="w-full text-center text-xs font-bold text-emerald-700 hover:underline py-1"
-                  >
-                    View All Categories →
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           <button
@@ -238,6 +227,20 @@ export default function Header({
             <span>Cart</span>
           </button>
         </div>
+      </div>
+
+      {/* 3. RICH MULTI-COLUMN MEGA MENU (EXPANDS UNDER HEADER ON CATEGORIES HOVER/CLICK) */}
+      <div ref={megaMenuRef}>
+        <HeaderMegaMenu
+          isOpen={categoryDropdownOpen}
+          onClose={() => setCategoryDropdownOpen(false)}
+          categories={categories}
+          onSelectCategory={onSelectCategory}
+          onSelectAllProducts={onSelectAllProducts}
+          navigateTo={navigateTo}
+          onMouseEnter={handleCategoriesMouseEnter}
+          onMouseLeave={handleCategoriesMouseLeave}
+        />
       </div>
 
       {/* Mobile Search Bar for small devices */}
