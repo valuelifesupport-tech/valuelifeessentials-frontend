@@ -21,7 +21,7 @@ export default function FeaturedProductsSection({
   ];
 
   const handleProductClick = (slug) => {
-    if (navigateTo) navigateTo(`/product/${slug}`, { view: 'product', slug });
+    if (navigateTo) navigateTo(`/product/${slug}`, { view: 'pdp', slug });
   };
 
   // Real products from database only - no fake hardcoded products

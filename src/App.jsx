@@ -36,7 +36,11 @@ export default function App() {
     if (path.startsWith('/admin')) return { view: 'admin', slug: null, category: null, collection: null };
     if (path.startsWith('/account') || path.startsWith('/profile')) return { view: 'account', slug: null, category: null, collection: null };
     if (path.startsWith('/products/')) {
-      const slug = path.replace('/products/', '');
+      const slug = path.replace('/products/', '').split('?')[0].split('#')[0].replace(/\/$/, '');
+      return { view: 'pdp', slug, category: null, collection: null };
+    }
+    if (path.startsWith('/product/')) {
+      const slug = path.replace('/product/', '').split('?')[0].split('#')[0].replace(/\/$/, '');
       return { view: 'pdp', slug, category: null, collection: null };
     }
     if (path === '/products') return { view: 'all_products', slug: null, category: null, collection: null };
@@ -167,7 +171,15 @@ export default function App() {
 
   const navigateTo = (path, newRouteState) => {
     window.history.pushState({}, '', path);
-    setRoute(newRouteState);
+    let state = newRouteState;
+    if (!state) {
+      state = getInitialRouteState();
+    } else {
+      if (state.view === 'product') {
+        state = { ...state, view: 'pdp' };
+      }
+    }
+    setRoute(state);
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
@@ -492,7 +504,7 @@ export default function App() {
             onSelectProduct={(slug, pObj) => navigateTo(`/products/${slug || pObj?.slug}`, { view: 'pdp', slug: slug || pObj?.slug, id: pObj?.id, category: null, collection: null })}
           />
         </SectionErrorBoundary>
-      ) : route.view === 'pdp' && route.slug ? (
+      ) : (route.view === 'pdp' || route.view === 'product') && route.slug ? (
         <SectionErrorBoundary name="Product Details Page">
           <ProductDetailPage 
             productSlug={route.slug}
@@ -502,7 +514,7 @@ export default function App() {
             onAddToCart={handleAddToCart}
             onAddToWishlist={handleToggleWishlist}
             onBack={() => navigateTo('/products', { view: 'all_products', slug: null, category: null, collection: null })}
-            onSelectProduct={(slug) => navigateTo(`/products/${slug}`, { view: 'pdp', slug, category: null, collection: null })}
+            onSelectProduct={(slug) => navigateTo(`/product/${slug}`, { view: 'pdp', slug, category: null, collection: null })}
             showToast={showToast}
           />
         </SectionErrorBoundary>

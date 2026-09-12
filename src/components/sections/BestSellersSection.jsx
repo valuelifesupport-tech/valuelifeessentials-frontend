@@ -97,14 +97,14 @@ export default function BestSellersSection({
                 <img
                   src={item.image_url}
                   alt={item.title}
-                  onClick={() => navigateTo && navigateTo(`/product/${item.slug}`, { view: 'product', slug: item.slug })}
+                  onClick={() => navigateTo && navigateTo(`/product/${item.slug}`, { view: 'pdp', slug: item.slug })}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 cursor-pointer"
                 />
               </div>
 
               <div>
                 <h3 
-                  onClick={() => navigateTo && navigateTo(`/product/${item.slug}`, { view: 'product', slug: item.slug })}
+                  onClick={() => navigateTo && navigateTo(`/product/${item.slug}`, { view: 'pdp', slug: item.slug })}
                   className="font-bold text-xs text-gray-900 line-clamp-1 hover:text-[#164e3f] cursor-pointer transition-colors"
                 >
                   {item.title}
