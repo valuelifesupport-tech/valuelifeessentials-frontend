@@ -5,10 +5,12 @@ import { resolveImgUrl } from '../../api/config';
 export default function BestSellersSection({ 
   products = [], 
   onAddToCart, 
+  handleAddToCart,
   navigateTo,
   currencySymbol = '₹',
   sectionsConfig
 }) {
+  const addToCartHandler = onAddToCart || handleAddToCart;
   const scrollRef = useRef(null);
 
   // Real products from database only
@@ -118,8 +120,8 @@ export default function BestSellersSection({
 
                   <button
                     type="button"
-                    onClick={() => onAddToCart && onAddToCart(item.rawProduct || item)}
-                    className="p-1.5 rounded-lg bg-emerald-50 text-[#164e3f] hover:bg-[#164e3f] hover:text-white transition-colors cursor-pointer"
+                    onClick={() => addToCartHandler && addToCartHandler(item.rawProduct || item)}
+                    className="p-1.5 rounded-lg bg-gray-100 hover:bg-[#164e3f] text-gray-700 hover:text-white transition-colors cursor-pointer"
                     aria-label="Add to Cart"
                   >
                     <ShoppingBag size={14} />

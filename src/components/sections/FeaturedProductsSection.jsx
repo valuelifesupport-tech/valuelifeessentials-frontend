@@ -5,12 +5,16 @@ import { resolveImgUrl } from '../../api/config';
 export default function FeaturedProductsSection({ 
   products = [], 
   onAddToCart, 
+  handleAddToCart,
   onToggleWishlist, 
+  handleToggleWishlist,
   isWishlisted, 
   navigateTo,
   currencySymbol = '₹',
   sectionsConfig
 }) {
+  const addToCartHandler = onAddToCart || handleAddToCart;
+  const toggleWishlistHandler = onToggleWishlist || handleToggleWishlist;
   const [activeTab, setActiveTab] = useState('ALL');
 
   const tabs = [
@@ -111,7 +115,7 @@ export default function FeaturedProductsSection({
                   />
                   <button
                     type="button"
-                    onClick={() => onToggleWishlist && onToggleWishlist(item.rawProduct || item)}
+                    onClick={() => toggleWishlistHandler && toggleWishlistHandler(item.rawProduct || item)}
                     className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 hover:bg-white text-gray-400 hover:text-red-500 shadow-sm transition-colors cursor-pointer"
                     aria-label="Add to Wishlist"
                   >
@@ -151,7 +155,7 @@ export default function FeaturedProductsSection({
                 <div className="pt-3">
                   <button
                     type="button"
-                    onClick={() => onAddToCart && onAddToCart(item.rawProduct || item)}
+                    onClick={() => addToCartHandler && addToCartHandler(item.rawProduct || item)}
                     className="w-full bg-[#164e3f] hover:bg-[#0f382d] text-white py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <ShoppingBag size={13} />
