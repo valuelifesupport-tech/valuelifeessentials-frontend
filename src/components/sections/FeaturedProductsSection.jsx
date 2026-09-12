@@ -116,10 +116,19 @@ export default function FeaturedProductsSection({
                   <button
                     type="button"
                     onClick={() => toggleWishlistHandler && toggleWishlistHandler(item.rawProduct || item)}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 hover:bg-white text-gray-400 hover:text-red-500 shadow-sm transition-colors cursor-pointer"
+                    className={`absolute top-2 right-2 p-1.5 rounded-full transition-all shadow-sm cursor-pointer ${
+                      isWishlisted && isWishlisted(item.id)
+                        ? 'bg-white text-[#b91c1c] border border-red-300 shadow-md scale-105'
+                        : 'bg-white/90 hover:bg-white text-gray-400 hover:text-[#b91c1c] border border-gray-200/80 hover:scale-105'
+                    }`}
                     aria-label="Add to Wishlist"
                   >
-                    <Heart size={14} fill={isWishlisted && isWishlisted(item.id) ? '#ef4444' : 'none'} color={isWishlisted && isWishlisted(item.id) ? '#ef4444' : 'currentColor'} />
+                    <Heart 
+                      size={14} 
+                      fill={isWishlisted && isWishlisted(item.id) ? '#b91c1c' : 'none'} 
+                      color={isWishlisted && isWishlisted(item.id) ? '#b91c1c' : 'currentColor'} 
+                      strokeWidth={2}
+                    />
                   </button>
                 </div>
 

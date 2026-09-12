@@ -552,6 +552,7 @@ export default function App() {
             productId={route.id}
             currency={currency}
             currencySymbol={currencySymbol}
+            wishlist={wishlist}
             onAddToCart={handleAddToCart}
             onAddToWishlist={handleToggleWishlist}
             onBack={() => navigateTo('/products', { view: 'all_products', slug: null, category: null, collection: null })}
