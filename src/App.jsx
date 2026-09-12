@@ -517,6 +517,7 @@ export default function App() {
         onOpenAuth={() => currentUser ? navigateTo('/account', { view: 'account', slug: null, category: null, collection: null }) : setIsAuthOpen(true)}
         categories={categories}
         collections={collections}
+        products={products}
         onSelectCategory={(cat) => navigateTo(`/category/${cat}`, { view: 'catalog', slug: null, category: cat, collection: null })}
         onSelectCollection={(coll) => navigateTo(`/collection/${coll}`, { view: 'catalog', slug: null, category: null, collection: coll })}
         onSelectAllProducts={() => navigateTo('/products', { view: 'all_products', slug: null, category: null, collection: null })}
