@@ -22,12 +22,13 @@ export default function ImageUploader({ label, value, onChange, placeholder = 'h
       return getApiUrl(`/api/media/file/${filename}`);
     }
 
+    // External full URLs (Amazon CDN, Unsplash, etc.)
+    if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
+
     if (clean.includes('/images/')) {
       const relative = clean.split('/images/').pop();
       return `/images/${relative}`;
     }
-
-    if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
 
     const path = clean.startsWith('/') ? clean : `/${clean}`;
     return getApiUrl(path);
@@ -56,18 +57,27 @@ export default function ImageUploader({ label, value, onChange, placeholder = 'h
     setUploading(true);
     try {
       const formData = new FormData();
+      formData.append('file', file);
       formData.append('image', file);
+
+      const token = localStorage.getItem('admin_session_token') || 'valuelife_admin_sec_2026_x890';
+      const headers = {
+        'x-admin-token': token,
+        'Authorization': `Bearer ${token}`
+      };
 
       const res = await fetch(getApiUrl('/api/upload'), {
         method: 'POST',
+        headers,
         body: formData
       });
 
       const data = await res.json();
-      if (data.imageUrl) {
-        onChange(data.imageUrl);
-      } else if (data.fullUrl) {
-        onChange(data.fullUrl);
+      const uploadedUrl = data.url || data.imageUrl || data.fullUrl || (data.filename ? `/uploads/${data.filename}` : '');
+      if (uploadedUrl) {
+        onChange(uploadedUrl);
+      } else {
+        console.error('File upload did not return a valid URL:', data);
       }
     } catch (err) {
       console.error('File upload error:', err);

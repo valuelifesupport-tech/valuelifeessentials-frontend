@@ -51,9 +51,19 @@ export default function App() {
       const slug = path.replace('/blog/', '');
       return { view: 'blog_detail', slug, category: null, collection: null };
     }
+    if (path === '/contact' || path === '/contact-us') return { view: 'page', slug: 'contact-us', category: null, collection: null };
+    if (path === '/about' || path === '/about-us') return { view: 'page', slug: 'about-us', category: null, collection: null };
+    if (path === '/faq') return { view: 'page', slug: 'faq', category: null, collection: null };
+    if (path === '/shipping-policy') return { view: 'page', slug: 'shipping-policy', category: null, collection: null };
+    if (path === '/returns-refund' || path === '/refund-policy') return { view: 'page', slug: 'refund-policy', category: null, collection: null };
+    if (path === '/privacy-policy') return { view: 'page', slug: 'privacy-policy', category: null, collection: null };
+    if (path === '/terms-of-service' || path === '/terms') return { view: 'page', slug: 'terms-of-service', category: null, collection: null };
     if (path.startsWith('/pages/')) {
-      const slug = path.replace('/pages/', '');
+      let slug = path.replace('/pages/', '').split('?')[0].split('#')[0].replace(/\/$/, '');
       if (slug === 'blog') return { view: 'blog', slug: null, category: null, collection: null };
+      if (slug === 'contact') slug = 'contact-us';
+      if (slug === 'about') slug = 'about-us';
+      if (slug === 'returns-refund') slug = 'refund-policy';
       return { view: 'page', slug, category: null, collection: null };
     }
     if (path.startsWith('/category/')) {
@@ -70,7 +80,7 @@ export default function App() {
   const [route, setRoute] = useState(getInitialRouteState());
   const [isMaintenanceActive, setIsMaintenanceActive] = useState(false);
   const [isMaintenanceUnlocked, setIsMaintenanceUnlocked] = useState(() => {
-    return localStorage.getItem('maintenance_unlocked') === 'true';
+    return sessionStorage.getItem('maintenance_unlocked') === 'true';
   });
 
   const [currency, setCurrency] = useState('INR');
@@ -190,7 +200,17 @@ export default function App() {
     fetch(getApiUrl('/api/hero-config')).then(r => r.json()).then(d => d && setHeroConfig(d)).catch(() => {});
     fetch(getApiUrl('/api/theme-config')).then(r => r.json()).then(d => d && setThemeConfig(d)).catch(() => {});
     fetch(getApiUrl('/api/sections-config')).then(r => r.json()).then(d => d && setSectionsConfig(d)).catch(() => {});
-    fetch(getApiUrl('/api/maintenance/status')).then(r => r.json()).then(d => d?.maintenance_mode && setIsMaintenanceActive(true)).catch(() => {});
+    fetch(getApiUrl('/api/maintenance/status'))
+      .then(r => r.json())
+      .then(d => {
+        const active = Boolean(d?.maintenance_mode || d?.mode);
+        setIsMaintenanceActive(active);
+        if (active && sessionStorage.getItem('maintenance_unlocked') !== 'true') {
+          setIsMaintenanceUnlocked(false);
+          localStorage.removeItem('maintenance_unlocked');
+        }
+      })
+      .catch(() => {});
     fetch(getApiUrl('/api/currency/detect')).then(r => r.json()).then(d => { if (d.currency) { setCurrency(d.currency); setCurrencySymbol(d.symbol); } }).catch(() => {});
   }, []);
 
@@ -561,7 +581,7 @@ export default function App() {
   }
 
   if (isMaintenanceActive && !isMaintenanceUnlocked && route.view !== 'admin') {
-    return <MaintenancePage onUnlock={() => { setIsMaintenanceUnlocked(true); localStorage.setItem('maintenance_unlocked', 'true'); }} />;
+    return <MaintenancePage onUnlock={() => { setIsMaintenanceUnlocked(true); sessionStorage.setItem('maintenance_unlocked', 'true'); }} />;
   }
 
   const isCatalog = route.view === 'catalog' || route.view === 'all_products' || route.view === 'offers' || route.view === 'bestsellers' || route.view === 'new_arrivals' || !!searchQuery;
