@@ -49,9 +49,7 @@ export default function PageView({ slug, onGoHome, showToast }) {
       setSubmitted(true);
       if (showToast) showToast('success', 'Message Sent!', 'Thank you! Our support team will get back to you within 2 hours.');
     } catch (err) {
-      // Fallback display
-      setSubmitted(true);
-      if (showToast) showToast('info', 'Message Received', 'Thank you! Our support team has logged your inquiry.');
+      if (showToast) showToast('error', 'Submission Failed', err.message || 'Could not submit your inquiry. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
