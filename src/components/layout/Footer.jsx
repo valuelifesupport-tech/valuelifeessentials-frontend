@@ -202,7 +202,7 @@ export default function Footer({ settings, categories = [], navigateTo }) {
               </li>
               <li className="flex items-center gap-2">
                 <MapPin size={13} className="text-emerald-400 shrink-0" />
-                <span>Indore, Madhya Pradesh, India 🇮🇳</span>
+                <span>{import.meta.env.VITE_STORE_ADDRESS || 'Hyderabad, Telangana, India'} 🇮🇳</span>
               </li>
             </ul>
           </div>

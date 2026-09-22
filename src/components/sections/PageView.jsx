@@ -188,7 +188,7 @@ export default function PageView({ slug, onGoHome, showToast }) {
                       <div>
                         <div className="text-[10px] text-slate-400 uppercase">Registered Location (India)</div>
                         <div className="text-slate-900 font-extrabold flex items-center gap-1.5">
-                          <span>Indore, Madhya Pradesh, India</span>
+                          <span>{import.meta.env.VITE_STORE_ADDRESS || 'Hyderabad, Telangana, India'}</span>
                           <span className="text-xs">🇮🇳</span>
                         </div>
                         <div className="text-[10px] text-slate-500 font-medium">Pan-India Express Shipping & Order Support</div>
