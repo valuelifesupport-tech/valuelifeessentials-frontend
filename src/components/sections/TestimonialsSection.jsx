@@ -7,12 +7,13 @@ export default function TestimonialsSection({ sectionsConfig }) {
   const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    // Fetch public approved customer reviews from database
-    fetch(getApiUrl('/api/reviews'))
-      .then(res => res.ok ? res.json() : [])
+    // Fetch live approved customer reviews from database
+    fetch(getApiUrl('/api/admin/reviews'))
+      .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          setReviews(data.slice(0, 3));
+          const approved = data.filter(r => r.status === 'APPROVED');
+          setReviews(approved.slice(0, 3));
         }
       })
       .catch(() => {});

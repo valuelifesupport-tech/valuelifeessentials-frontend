@@ -17,8 +17,7 @@ export default function CartDrawer({
   onProceedToCheckout,
   settings,
   onAddToCart,
-  allProducts = [],
-  onOpenVariantModal
+  allProducts = []
 }) {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -30,13 +29,9 @@ export default function CartDrawer({
   const depositPercent = settings?.partial_deposit_percent || 20;
   const isTaxInclusive = Number(settings?.all_prices_include_tax ?? 1) === 1;
 
-  // Calculate Subtotal & GST Tax Amount based on dynamic item GST % or store tax rate
+  // Calculate Subtotal & GST Tax Amount based on item GST % or store tax rate
   let rawSubtotal = 0;
   let calculatedGstTax = 0;
-
-  const defaultGstRate = (settings?.default_gst_percent !== undefined && settings?.default_gst_percent !== null && settings?.default_gst_percent !== '')
-    ? Number(settings.default_gst_percent)
-    : (settings?.federal_tax_rate && Number(settings.federal_tax_rate) > 0 ? Number(settings.federal_tax_rate) : 5);
 
   cartItems.forEach(item => {
     const itemPrice = item.price !== undefined && item.price !== null 
@@ -47,15 +42,13 @@ export default function CartDrawer({
 
     const itemGstRate = (item.gst_percent !== undefined && item.gst_percent !== null && item.gst_percent !== '')
       ? Number(item.gst_percent)
-      : ((item.gst_rate !== undefined && item.gst_rate !== null && item.gst_rate !== '')
-          ? Number(item.gst_rate)
-          : defaultGstRate);
+      : (settings?.federal_tax_rate ? Number(settings.federal_tax_rate) : 18);
 
     if (isTaxInclusive) {
-      const incGst = itemGstRate > 0 ? (itemTotal * (itemGstRate / (100 + itemGstRate))) : 0;
+      const incGst = itemTotal * (itemGstRate / (100 + itemGstRate));
       calculatedGstTax += incGst;
     } else {
-      const addGst = itemGstRate > 0 ? ((itemTotal * itemGstRate) / 100) : 0;
+      const addGst = itemTotal * (itemGstRate / 100);
       calculatedGstTax += addGst;
     }
   });
@@ -63,26 +56,13 @@ export default function CartDrawer({
   const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
   const afterDiscountSubtotal = Math.max(0, rawSubtotal - discountAmount);
 
-  // Dynamic Shipping Settings from Store Settings
-  const shippingFee = Number(settings?.shipping_fee ?? 50);
-  const freeShippingThreshold = Number(settings?.free_shipping_threshold ?? 499);
-  const enableFreeShipping = settings?.enable_free_shipping !== undefined ? (Number(settings?.enable_free_shipping) === 1) : true;
-
-  const isFreeShipping = Boolean(
-    (appliedCoupon && (appliedCoupon.free_shipping || appliedCoupon.is_free_shipping)) ||
-    (enableFreeShipping && cartItems.length > 0 && afterDiscountSubtotal >= freeShippingThreshold)
-  );
-  const shippingAmount = (cartItems.length === 0 || isFreeShipping) ? 0 : shippingFee;
-
-  // Proportional discount ratio for tax
-  const discountRatio = rawSubtotal > 0 ? Math.max(0, 1 - (discountAmount / rawSubtotal)) : 1;
-  const finalTaxAmount = Math.round(calculatedGstTax * discountRatio * 100) / 100;
+  const finalTaxAmount = Math.round(calculatedGstTax * 100) / 100;
   const finalTotal = isTaxInclusive 
-    ? Math.round((afterDiscountSubtotal + shippingAmount) * 100) / 100 
-    : Math.round((afterDiscountSubtotal + finalTaxAmount + shippingAmount) * 100) / 100;
+    ? afterDiscountSubtotal 
+    : Math.round((afterDiscountSubtotal + finalTaxAmount) * 100) / 100;
 
   const depositAmount = Math.round(finalTotal * (depositPercent / 100));
-  const remainingAmount = Math.max(0, finalTotal - depositAmount);
+  const remainingAmount = finalTotal - depositAmount;
 
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
@@ -93,11 +73,15 @@ export default function CartDrawer({
       const res = await fetch(getApiUrl('/api/coupons/validate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode, order_amount: rawSubtotal, cart_items: cartItems })
+        body: JSON.stringify({ code: couponCode, cart_subtotal: rawSubtotal, order_amount: rawSubtotal, cart_items: cartItems })
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json();
       if (res.ok) {
-        setAppliedCoupon(data);
+        setAppliedCoupon({
+          ...data,
+          discount: data.discount_amount || data.discount || 0,
+          free_shipping: data.free_shipping || false
+        });
         setCouponError('');
       } else {
         setCouponError(data.error || 'Invalid coupon code');
@@ -113,11 +97,13 @@ export default function CartDrawer({
         {/* Drawer Header */}
         <div className="p-4 border-b border-emerald-900/20 flex justify-between items-center bg-gradient-to-r from-[#1b4332] to-[#2d6a4f] text-white shadow-md shrink-0 z-10">
           <div className="flex items-center gap-2.5">
-            <span className="text-xl">🛒</span>
-            <h3 className="font-extrabold text-white text-lg font-['Outfit']">Your Cart</h3>
-            <span className="bg-white/20 text-white border border-white/30 text-xs font-black px-3 py-1 rounded-full shadow-xs">
-              {cartItems.reduce((acc, it) => acc + (it.quantity || 1), 0)} {cartItems.reduce((acc, it) => acc + (it.quantity || 1), 0) === 1 ? 'Item' : 'Items'} ({cartItems.length} {cartItems.length === 1 ? 'Product' : 'Products'})
-            </span>
+            <span className="text-2xl">🛒</span>
+            <div>
+              <h3 className="font-extrabold text-white text-lg font-['Outfit'] leading-tight">Your Shopping Cart</h3>
+              <p className="text-[11px] text-emerald-200 font-bold mt-0.5">
+                {cartItems.length} {cartItems.length === 1 ? 'Product' : 'Products'} • {cartItems.reduce((acc, i) => acc + (i.quantity || 1), 0)} Total Units
+              </p>
+            </div>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-white/10 text-emerald-100 hover:text-white rounded-full transition-colors cursor-pointer" data-reticle-target="cart-close-btn">
             <X size={20} />
@@ -153,7 +139,6 @@ export default function CartDrawer({
             currency={currency}
             currencySymbol={currencySymbol}
             onAddToCart={onAddToCart}
-            onOpenVariantModal={onOpenVariantModal}
           />
         </div>
 
@@ -184,12 +169,6 @@ export default function CartDrawer({
               currencySymbol={currencySymbol}
               rawSubtotal={rawSubtotal}
               discountAmount={discountAmount}
-              afterDiscountSubtotal={afterDiscountSubtotal}
-              shippingFee={shippingFee}
-              freeShippingThreshold={freeShippingThreshold}
-              enableFreeShipping={enableFreeShipping}
-              shippingAmount={shippingAmount}
-              isFreeShipping={isFreeShipping}
               isTaxInclusive={isTaxInclusive}
               finalTaxAmount={finalTaxAmount}
               finalTotal={finalTotal}

@@ -83,12 +83,12 @@ export default function PaymentGatewayModal({
         })
       });
 
-      const rzpOrder = await createRes.json().catch(() => ({}));
-      if (!createRes.ok || !rzpOrder?.id) {
-        throw new Error(rzpOrder?.error || `Failed to initialize payment gateway (Status ${createRes.status})`);
+      const rzpOrder = await createRes.json();
+      if (!createRes.ok || !rzpOrder.id) {
+        throw new Error(rzpOrder.error || 'Failed to initialize payment gateway');
       }
 
-      const keyId = rzpOrder.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID;
+      const keyId = rzpOrder.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TcG0EYPMH8tl5L';
 
       const options = {
         key: keyId,
@@ -117,12 +117,14 @@ export default function PaymentGatewayModal({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                order_id: orderData?.orderId || orderData?.order_id || orderData?.id
+                order_id: orderData?.orderId || orderData?.order_id || orderData?.id,
+                customer_email: customerInfo?.email || orderData?.customer_email,
+                user_id: orderData?.user_id
               })
             });
-            const verifyData = await verifyRes.json().catch(() => ({}));
-            if (!verifyRes.ok || !verifyData?.verified) {
-              throw new Error(verifyData?.message || verifyData?.error || 'Payment signature verification failed');
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.verified) {
+              throw new Error(verifyData.message || 'Payment signature verification failed');
             }
 
             setIsProcessing(false);
@@ -254,6 +256,27 @@ export default function PaymentGatewayModal({
           onClose={onClose}
         />
 
+        {/* EXTENSIBLE GATEWAY SWITCHER */}
+        {availableGateways && availableGateways.length > 1 && (
+          <div className="bg-gray-50 border-b border-gray-200 px-4 py-2 flex items-center gap-2 overflow-x-auto text-xs">
+            <span className="text-[10px] font-extrabold uppercase text-gray-500 shrink-0">Gateway:</span>
+            {availableGateways.map(gw => (
+              <button
+                key={gw.id}
+                type="button"
+                onClick={() => setSelectedGateway(gw.id)}
+                className={`px-3 py-1 rounded-full text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+                  selectedGateway === gw.id
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
+                }`}
+                data-reticle-target={`gateway-btn-${gw.id}`}
+              >
+                {gw.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* PAYMENT METHODS TAB BAR */}
         <div className="grid grid-cols-4 border-b border-gray-200 text-xs font-bold text-gray-600 bg-gray-50/50">

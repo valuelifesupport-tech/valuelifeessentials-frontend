@@ -91,7 +91,7 @@ export default function SelectVariantModal({
 
   return (
     <div 
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
       onClick={onClose}
       data-reticle-target="select-variant-modal-backdrop"
     >
@@ -177,7 +177,15 @@ export default function SelectVariantModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" data-reticle-target="variant-modal-options-grid">
                 {variantList.map((v, idx) => {
-                  const isSelected = selectedVariant && (String(selectedVariant.id) === String(v.id) || selectedVariant.variant_name === v.variant_name);
+                  const isSelected = selectedVariant
+                    ? (v.id != null && selectedVariant.id != null
+                        ? String(v.id) === String(selectedVariant.id)
+                        : (v === selectedVariant || (
+                            (v.variant_name || v.name) === (selectedVariant.variant_name || selectedVariant.name) &&
+                            Number(v.price_inr || v.price) === Number(selectedVariant.price_inr || selectedVariant.price) &&
+                            (v.sku || '') === (selectedVariant.sku || '')
+                          )))
+                    : idx === 0;
                   const vPrice = isINR ? Number(v.price_inr || v.price || 0) : Number(v.price_usd || 0);
                   const vDisc = isINR ? Number(v.discount_inr || 0) : Number(v.discount_usd || 0);
                   const effectiveVPrice = (vDisc > 0 && vDisc < vPrice) ? vDisc : vPrice;

@@ -32,14 +32,13 @@ export default function SignupForm({
       </div>
 
       <div>
-        <label className="block font-bold text-gray-700 mb-1">
-          Mobile Phone Number <span className="text-gray-400 font-normal">(for login & order updates)</span>
-        </label>
+        <label className="block font-bold text-gray-700 mb-1">Mobile Phone Number *</label>
         <div className="relative">
           <Phone size={16} className="absolute left-3 top-3 text-gray-400" />
           <input
             type="tel"
-            placeholder="e.g. 98123 45678"
+            required={!email}
+            placeholder="e.g. +91 98123 45678"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 font-bold focus:border-[#3b6e14] focus:outline-none"
@@ -49,13 +48,12 @@ export default function SignupForm({
       </div>
 
       <div>
-        <label className="block font-bold text-gray-700 mb-1">
-          Email Address <span className="text-gray-400 font-normal">(optional if phone is entered)</span>
-        </label>
+        <label className="block font-bold text-gray-700 mb-1">Email Address (Optional if Phone provided)</label>
         <div className="relative">
           <Mail size={16} className="absolute left-3 top-3 text-gray-400" />
           <input
             type="email"
+            required={!phone}
             placeholder="e.g. vikram@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -87,7 +85,7 @@ export default function SignupForm({
         className="w-full bg-[#3b6e14] hover:bg-[#2e5710] text-white font-extrabold py-3 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
         data-reticle-target="user-auth-signup-submit"
       >
-        <span>{loading ? 'Creating Account...' : 'Create Account & Send Verification Code'}</span>
+        <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
         <ArrowRight size={16} />
       </button>
     </form>

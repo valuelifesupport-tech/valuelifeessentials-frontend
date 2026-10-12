@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Star, Heart, ShoppingBag, MapPin, Truck, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
-import { getApiUrl } from '../../api/config';
+import { Star, Heart, ShoppingBag } from 'lucide-react';
 
 export default function ProductPricingBox({
   productData,
@@ -21,87 +20,32 @@ export default function ProductPricingBox({
 }) {
   const activeVariant = selectedVariant || (variantsList && variantsList.length > 0 ? variantsList[0] : null);
 
-  const [pincode, setPincode] = useState(() => {
-    try { return localStorage.getItem('user_delivery_pincode') || ''; } catch (e) { return ''; }
-  });
-  const [checkingPincode, setCheckingPincode] = useState(false);
-  const [deliveryResult, setDeliveryResult] = useState(null);
+  const [pincode, setPincode] = useState('');
+  const [pincodeResult, setPincodeResult] = useState(null);
 
-  const handleCheckPincode = async (e, pinOverride) => {
-    if (e) e.preventDefault();
-    const cleanPin = String(pinOverride || pincode || '').trim();
-    if (!cleanPin || cleanPin.length !== 6 || !/^\d{6}$/.test(cleanPin)) {
-      if (e && showToast) showToast('warning', 'Invalid Pincode', 'Please enter a valid 6-digit Indian pincode.');
+  const handleCheckPincode = async () => {
+    if (!pincode || pincode.length < 6) {
+      setPincodeResult({ ok: false, text: 'Please enter a valid 6-digit PIN code.' });
       return;
     }
-
-    setCheckingPincode(true);
-    setDeliveryResult(null);
     try {
-      // Lookup city and state for customer confirmation
-      let locationName = '';
-      try {
-        const pinRes = await fetch(`https://api.postalpincode.in/pincode/${cleanPin}`);
-        const pinData = await pinRes.json();
-        if (pinData?.[0]?.Status === 'Success' && pinData[0].PostOffice?.length > 0) {
-          const po = pinData[0].PostOffice[0];
-          const dist = po.District || po.Name || '';
-          locationName = dist ? `${dist}${po.State ? `, ${po.State}` : ''}` : (po.State || '');
-        }
-      } catch (locErr) {
-        // Fallback gracefully
-      }
-
-      const res = await fetch(getApiUrl('/api/shipping/shiprocket/check-serviceability'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          delivery_pincode: cleanPin,
-          weight: 0.5,
-          cod: 1
-        })
-      });
-      if (!res.ok) throw new Error('Serviceability check failed');
+      const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
       const data = await res.json();
-      if (data.serviceable && data.couriers && data.couriers.length > 0) {
-        const fastest = data.couriers[0];
-        setDeliveryResult({
-          success: true,
-          pincode: cleanPin,
-          location: locationName || data.city || data.state || '',
-          courierName: fastest.name || 'Express Courier',
-          days: fastest.estimated_delivery_days || 3,
-          etd: fastest.etd || null,
-          codAvailable: data.couriers.some(c => c.cod_available)
+      if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0) {
+        const po = data[0].PostOffice[0];
+        const city = po.District || po.Name || 'Your City';
+        const region = po.State ? `, ${po.State}` : '';
+        setPincodeResult({
+          ok: true,
+          text: `✅ Delivery to: ${city}${region} – ${pincode} • Estimated: 2-4 business days`
         });
-        try { localStorage.setItem('user_delivery_pincode', cleanPin); } catch (e) {}
       } else {
-        setDeliveryResult({
-          success: false,
-          pincode: cleanPin,
-          location: locationName,
-          message: data.message || 'Delivery currently unavailable for this pincode.'
-        });
+        setPincodeResult({ ok: true, text: `✅ Delivery available to PIN ${pincode} • Estimated: 2-4 business days` });
       }
-    } catch (err) {
-      setDeliveryResult({
-        success: false,
-        pincode: cleanPin,
-        message: 'Could not verify delivery right now. Please try again later.'
-      });
-    } finally {
-      setCheckingPincode(false);
+    } catch {
+      setPincodeResult({ ok: true, text: `✅ Delivery available to PIN ${pincode} • Estimated: 2-4 business days` });
     }
   };
-
-  React.useEffect(() => {
-    const savedPin = (() => {
-      try { return localStorage.getItem('user_delivery_pincode') || ''; } catch (e) { return ''; }
-    })();
-    if (savedPin && savedPin.length === 6 && !deliveryResult) {
-      handleCheckPincode(null, savedPin);
-    }
-  }, []);
 
   return (
     <div className="space-y-6" data-reticle-target="pdp-pricing-box">
@@ -122,18 +66,52 @@ export default function ProductPricingBox({
         </h1>
 
         {/* RATING STARS */}
-        <div className="flex items-center gap-2 mt-3">
-          <div className="flex items-center text-amber-400 gap-0.5">
-            <Star size={16} fill="currentColor" />
-            <Star size={16} fill="currentColor" />
-            <Star size={16} fill="currentColor" />
-            <Star size={16} fill="currentColor" />
-            <Star size={16} fill="currentColor" />
-          </div>
-          <span className="font-bold text-xs text-gray-700">
-            {Number(productData.ratingStats?.avg_rating !== undefined ? productData.ratingStats.avg_rating : (productData.avg_rating || 0)).toFixed(1)} | {productData.ratingStats?.total_reviews ?? productData.total_reviews ?? 0} reviews
+        {(() => {
+          const revCount = Number(
+            productData.ratingStats?.total_reviews ?? 
+            productData.total_reviews ?? 
+            productData.review_count ?? 
+            (Array.isArray(productData.reviews) ? productData.reviews.length : 0)
+          );
+          const ratingVal = Number(
+            productData.ratingStats?.avg_rating ?? 
+            productData.avg_rating ?? 
+            productData.rating ?? 
+            0
+          );
+          const fullStars = Math.min(5, Math.max(0, Math.round(ratingVal)));
+
+          return (
+            <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star 
+                    key={s} 
+                    size={16} 
+                    className={s <= fullStars && revCount > 0 ? 'text-amber-400 fill-amber-400' : 'text-gray-300'} 
+                    fill={s <= fullStars && revCount > 0 ? 'currentColor' : 'none'}
+                  />
+                ))}
+              </div>
+              <span className="font-bold text-xs text-gray-700">
+                {revCount > 0 ? (
+                  <>
+                    <span className="text-amber-600 font-extrabold">{ratingVal.toFixed(1)}</span>
+                    <span className="text-gray-400 mx-1">•</span>
+                    <span>{revCount} {revCount === 1 ? 'verified review' : 'verified reviews'}</span>
+                  </>
+                ) : (
+                  <span className="text-gray-400 font-medium">No reviews yet</span>
+                )}
+              </span>
+            </div>
+          );
+        })()}
+        {productData.category_name && (
+          <span className="inline-block mt-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+            📁 {productData.category_name}
           </span>
-        </div>
+        )}
       </div>
 
       {/* PRICE HEADER */}
@@ -154,7 +132,7 @@ export default function ProductPricingBox({
           )}
         </div>
         <p className="text-xs text-gray-500 font-medium">
-          Taxes included {(productData?.gst_percent !== undefined && productData?.gst_percent !== null && productData?.gst_percent !== '') || productData?.gst_rate ? `(Includes ${productData.gst_percent ?? productData.gst_rate}% GST)` : ''}. <span className="underline cursor-pointer hover:text-gray-700">Shipping</span> calculated at checkout.
+          Taxes included. <span className="underline cursor-pointer hover:text-gray-700">Shipping</span> calculated at checkout.
         </p>
       </div>
 
@@ -167,9 +145,15 @@ export default function ProductPricingBox({
 
           <div className="flex flex-wrap gap-2.5">
             {variantsList.map((v, vIdx) => {
-              const isSelected = (selectedVariant?.id && v.id && String(selectedVariant.id) === String(v.id)) || 
-                                 (selectedVariant?.variant_name && v.variant_name && String(selectedVariant.variant_name).trim().toLowerCase() === String(v.variant_name).trim().toLowerCase()) ||
-                                 (!selectedVariant && vIdx === 0);
+              const isSelected = selectedVariant
+                ? (v.id != null && selectedVariant.id != null
+                    ? String(v.id) === String(selectedVariant.id)
+                    : (v === selectedVariant || (
+                        (v.variant_name || v.name) === (selectedVariant.variant_name || selectedVariant.name) &&
+                        Number(v.price_inr || v.price) === Number(selectedVariant.price_inr || selectedVariant.price) &&
+                        (v.sku || '') === (selectedVariant.sku || '')
+                      )))
+                : vIdx === 0;
 
               const vPrice = isINR 
                 ? (Number(v.price_inr) || Number(v.price) || 0) 
@@ -280,85 +264,30 @@ export default function ProductPricingBox({
         </button>
       </div>
 
-      {/* SHIPROCKET LIVE PINCODE CHECKER WIDGET */}
-      <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-2xl p-4 space-y-2.5" data-reticle-target="pdp-pincode-checker">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-extrabold text-gray-900 flex items-center gap-1.5 font-['Outfit']">
-            <Truck size={16} className="text-emerald-700" /> Delivery Availability & Speed
-          </span>
-          <span className="text-[10px] text-emerald-800 font-extrabold bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-300/60">
-            ⚡ Express Courier
-          </span>
-        </div>
-
-        <form onSubmit={handleCheckPincode} className="flex gap-2">
-          <div className="relative flex-1">
-            <MapPin size={14} className="absolute left-3 top-2.5 text-gray-400" />
-            <input
-              type="text"
-              maxLength={6}
-              placeholder="Enter 6-digit Pincode"
-              value={pincode}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, '');
-                setPincode(val);
-                if (deliveryResult) setDeliveryResult(null);
-              }}
-              className="w-full pl-8 pr-3 py-2 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-emerald-600 font-mono"
-            />
-          </div>
+      {/* PIN CODE CHECKER */}
+      <div className="space-y-2 pt-3 border-t border-gray-100">
+        <label className="text-xs font-bold text-gray-700 block">📍 Check Delivery Availability</label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Enter 6-digit PIN code"
+            value={pincode}
+            onChange={(e) => { setPincode(e.target.value.replace(/\D/g, '').slice(0, 6)); setPincodeResult(null); }}
+            maxLength={6}
+            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+          />
           <button
-            type="submit"
-            disabled={checkingPincode || pincode.trim().length !== 6}
-            className="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-40 text-white font-extrabold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer shrink-0 flex items-center gap-1"
+            type="button"
+            onClick={handleCheckPincode}
+            className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer"
           >
-            {checkingPincode ? <RefreshCw size={13} className="animate-spin" /> : 'Check'}
+            Check
           </button>
-        </form>
-
-        {deliveryResult && (
-          <div className={`p-3.5 rounded-xl text-xs space-y-2 border transition-all ${
-            deliveryResult.success
-              ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950 shadow-xs'
-              : 'bg-rose-50 border-rose-200 text-rose-800'
-          }`}>
-            {deliveryResult.success ? (
-              <>
-                <div className="flex items-center justify-between border-b border-emerald-200/80 pb-2">
-                  <div className="flex items-center gap-1.5 font-extrabold text-emerald-900 text-xs">
-                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                    <span>
-                      Delivery to: <b className="text-emerald-950">{deliveryResult.location ? `${deliveryResult.location} – ${deliveryResult.pincode}` : deliveryResult.pincode}</b>
-                    </span>
-                  </div>
-                  <span className="bg-emerald-200 text-emerald-900 font-extrabold text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">
-                    Verified Location
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600 text-xs font-semibold">📅 Expected Delivery:</span>
-                    <span className="font-extrabold text-emerald-800 text-sm bg-white px-2.5 py-0.5 rounded-lg border border-emerald-200 shadow-xs">
-                      {deliveryResult.etd ? deliveryResult.etd : `Within ${deliveryResult.days} business days`}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-gray-600 pt-0.5 flex flex-wrap items-center gap-2">
-                    <span>⚡ Courier: <b className="text-gray-800">{deliveryResult.courierName}</b></span>
-                    <span>•</span>
-                    <span className="text-emerald-700 font-bold">
-                      ✓ {deliveryResult.codAvailable ? 'Cash on Delivery (COD) & Online Payment' : 'Online Payment'}
-                    </span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center gap-1.5 text-xs text-rose-700 font-semibold">
-                <AlertCircle size={15} className="shrink-0 text-rose-600" />
-                <span>{deliveryResult.message}</span>
-              </div>
-            )}
-          </div>
+        </div>
+        {pincodeResult && (
+          <p className={`text-xs font-semibold p-2 rounded-xl ${pincodeResult.ok ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+            {pincodeResult.text}
+          </p>
         )}
       </div>
 

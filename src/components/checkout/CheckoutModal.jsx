@@ -1,27 +1,6 @@
 import React from 'react';
 import { Sparkles, ArrowRight } from 'lucide-react';
 
-const INDIAN_STATES = [
-  "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", 
-  "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Goa", 
-  "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", "Karnataka", 
-  "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", "Maharashtra", "Manipur", 
-  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", 
-  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", 
-  "Uttarakhand", "West Bengal"
-];
-
-const clean10Phone = (p) => {
-  if (!p) return '';
-  const digits = String(p).replace(/\D/g, '');
-  if (digits.length === 10) return digits;
-  if (digits.length === 11 && digits.startsWith('0')) return digits.slice(1);
-  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
-  const m = digits.match(/[6-9]\d{9}/);
-  if (m) return m[0];
-  return digits.length > 10 ? digits.slice(-10) : digits;
-};
-
 export default function CheckoutModal({
   isOpen,
   onClose,
@@ -41,26 +20,18 @@ export default function CheckoutModal({
 }) {
   if (!isOpen && !orderSuccess) return null;
 
-  // Auto-fill logged-in user credentials and structured address when checkout opens (once per open)
-  const wasOpenRef = React.useRef(false);
+  // Auto-fill logged-in user credentials and address when checkout opens
   React.useEffect(() => {
-    if (isOpen && !wasOpenRef.current && currentUser) {
-      const uPhone = clean10Phone(customerForm?.phone || currentUser.phone);
+    if (isOpen && currentUser) {
       setCustomerForm(prev => ({
-        ...prev,
         name: prev?.name || currentUser.name || '',
-        phone: prev?.phone || uPhone || '',
+        phone: prev?.phone || currentUser.phone || '',
         email: prev?.email || currentUser.email || '',
-        street: prev?.street || currentUser.address || localStorage.getItem('user_last_shipping_address') || '',
         address: prev?.address || currentUser.address || localStorage.getItem('user_last_shipping_address') || '',
-        city: prev?.city || currentUser.city || '',
-        state: prev?.state || currentUser.state || 'Maharashtra',
-        pincode: prev?.pincode || currentUser.pincode || '',
         remark: prev?.remark || ''
       }));
     }
-    wasOpenRef.current = isOpen;
-  }, [isOpen]);
+  }, [isOpen, currentUser]);
 
   return (
     <>
@@ -103,22 +74,6 @@ export default function CheckoutModal({
                 <span>{currencySymbol}{checkoutData.rawSubtotal || checkoutData.finalTotal}</span>
               </div>
 
-              {checkoutData.discountAmount > 0 && (
-                <div className="flex justify-between font-bold text-emerald-700">
-                  <span>Coupon Discount:</span>
-                  <span>-{currencySymbol}{checkoutData.discountAmount}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between font-bold text-gray-700">
-                <span>Delivery / Shipping:</span>
-                {checkoutData.isFreeShipping || checkoutData.shippingAmount === 0 ? (
-                  <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded font-black">FREE 🚚</span>
-                ) : (
-                  <span className="text-gray-900">+{currencySymbol}{checkoutData.shippingAmount}</span>
-                )}
-              </div>
-
               {!checkoutData.isTaxInclusive ? (
                 <div className="flex justify-between font-bold text-amber-800">
                   <span>GST Tax (Added at Checkout):</span>
@@ -158,15 +113,38 @@ export default function CheckoutModal({
                 </div>
               )}
 
-              {/* PAYMENT GATEWAY DISPLAY FOR ONLINE PAYMENTS (RAZORPAY ONLY) */}
+              {/* PAYMENT GATEWAY SELECTION FOR ONLINE PAYMENTS */}
               {checkoutData.paymentMode !== 'COD' && (
-                <div className="pt-2 border-t border-emerald-300/80 flex items-center justify-between text-[11px]">
-                  <span className="font-extrabold text-emerald-900 flex items-center gap-1.5">
-                    <span className="text-emerald-600 text-sm">🔒</span> Secure Payment Partner:
-                  </span>
-                  <div className="flex items-center gap-2 bg-white border border-emerald-300 px-3 py-1.5 rounded-lg shadow-xs">
-                    <span className="font-black text-emerald-950 text-xs tracking-tight">Razorpay</span>
-                    <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">UPI / Cards / NetBanking</span>
+                <div className="pt-2 border-t border-emerald-300/80 space-y-1.5">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="font-extrabold text-emerald-900 flex items-center gap-1">
+                      <span>⚡</span> Gateway Provider:
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-bold uppercase">
+                      {selectedPaymentGateway} (Test Mode)
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[
+                      { id: 'razorpay', label: 'Razorpay', badge: 'Active' },
+                      { id: 'phonepe', label: 'PhonePe', badge: 'Ready' },
+                      { id: 'paytm', label: 'Paytm', badge: 'Ready' }
+                    ].map(gw => (
+                      <button
+                        key={gw.id}
+                        type="button"
+                        onClick={() => setSelectedPaymentGateway(gw.id)}
+                        className={`p-1.5 rounded-lg border text-center transition-all cursor-pointer ${
+                          selectedPaymentGateway === gw.id
+                            ? 'bg-emerald-800 text-white border-emerald-800 shadow-sm ring-1 ring-emerald-600'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-emerald-50'
+                        }`}
+                        data-reticle-target={`checkout-gw-${gw.id}`}
+                      >
+                        <div className="font-extrabold text-[11px] leading-tight">{gw.label}</div>
+                        <div className={`text-[8px] font-bold ${selectedPaymentGateway === gw.id ? 'text-emerald-200' : 'text-gray-400'}`}>{gw.badge}</div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
@@ -184,105 +162,38 @@ export default function CheckoutModal({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Mobile Phone Number * (10 Digits)</label>
-                  <div className="flex items-center">
-                    <span className="px-3 py-2.5 bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg text-gray-600 text-xs font-mono font-bold">
-                      +91
-                    </span>
-                    <input 
-                      type="tel" 
-                      required 
-                      maxLength={10}
-                      placeholder="9812345678"
-                      value={customerForm?.phone || ''}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        setCustomerForm(prev => ({ ...prev, phone: val }));
-                      }}
-                      className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-r-lg text-gray-900 font-mono font-bold focus:border-emerald-600 focus:outline-none text-xs"
-                      data-reticle-target="checkout-input-phone"
-                    />
-                  </div>
+                  <label className="block font-bold text-gray-700 mb-1">Mobile Phone Number * (Mandatory)</label>
+                  <input 
+                    type="tel" required placeholder="e.g. +91 98123 45678"
+                    value={customerForm?.phone || ''}
+                    onChange={(e) => setCustomerForm({ ...customerForm, phone: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium focus:border-emerald-600 focus:outline-none"
+                    data-reticle-target="checkout-input-phone"
+                  />
                 </div>
                 <div>
                   <label className="block font-bold text-gray-700 mb-1">Email Address (Optional)</label>
                   <input 
                     type="email" placeholder="e.g. rajesh@gmail.com (Optional)"
                     value={customerForm?.email || ''}
-                    onChange={(e) => setCustomerForm(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium focus:border-emerald-600 focus:outline-none text-xs"
+                    onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium focus:border-emerald-600 focus:outline-none"
                     data-reticle-target="checkout-input-email"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 mb-1">House / Flat No., Building, Street Name *</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="e.g. Flat 302, Palm Heights, Main Link Road"
-                  value={customerForm?.street || customerForm?.address || ''}
-                  onChange={(e) => {
-                    const stVal = e.target.value;
-                    setCustomerForm(prev => ({ 
-                      ...prev, 
-                      street: stVal,
-                      address: stVal 
-                    }));
-                  }}
+                <label className="block font-bold text-gray-700 mb-1">Shipping Home Address *</label>
+                <textarea 
+                  rows={2} required placeholder="Flat No., Street, Area, City, Pincode"
+                  value={customerForm?.address || ''}
+                  onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })}
                   className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium focus:border-emerald-600 focus:outline-none text-xs"
                   data-reticle-target="checkout-input-address"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">City / Town *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="e.g. Mumbai"
-                    value={customerForm?.city || ''}
-                    onChange={(e) => setCustomerForm(prev => ({ ...prev, city: e.target.value }))}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium focus:border-emerald-600 focus:outline-none text-xs"
-                    data-reticle-target="checkout-input-city"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">State *</label>
-                  <select
-                    required
-                    value={customerForm?.state || 'Maharashtra'}
-                    onChange={(e) => setCustomerForm(prev => ({ ...prev, state: e.target.value }))}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium focus:border-emerald-600 focus:outline-none text-xs cursor-pointer"
-                    data-reticle-target="checkout-select-state"
-                  >
-                    {INDIAN_STATES.map((st) => (
-                      <option key={st} value={st}>{st}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">Pincode * (6 Digits)</label>
-                  <input 
-                    type="text" 
-                    required 
-                    maxLength={6}
-                    placeholder="e.g. 400001"
-                    value={customerForm?.pincode || ''}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                      setCustomerForm(prev => ({ ...prev, pincode: val }));
-                    }}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-mono font-bold focus:border-emerald-600 focus:outline-none text-xs text-center"
-                    data-reticle-target="checkout-input-pincode"
-                  />
-                </div>
+                ></textarea>
               </div>
 
               <div>
@@ -292,8 +203,8 @@ export default function CheckoutModal({
                 <textarea 
                   rows={2}
                   placeholder="e.g. Please call before delivery, leave with security guard, pack in eco-friendly box..."
-                  value={customerForm?.remark || ''}
-                  onChange={(e) => setCustomerForm(prev => ({ ...prev, remark: e.target.value }))}
+                  value={customerForm.remark || ''}
+                  onChange={(e) => setCustomerForm({ ...customerForm, remark: e.target.value })}
                   className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 font-medium focus:border-emerald-600 focus:outline-none text-xs"
                   data-reticle-target="checkout-input-remark"
                 ></textarea>
@@ -315,19 +226,14 @@ export default function CheckoutModal({
                 <button 
                   type="submit"
                   disabled={isSubmittingOrder}
-                  className="flex-1 bg-[#2d6a4f] hover:bg-[#1b4332] disabled:opacity-50 text-white font-extrabold py-3.5 rounded-xl shadow-lg text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  className="flex-1 bg-[#2d6a4f] hover:bg-[#1b4332] disabled:opacity-50 text-white font-extrabold py-3 rounded-xl shadow-lg text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
                   data-reticle-target="checkout-submit-btn"
                 >
                   {isSubmittingOrder ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
-                      <span>{checkoutData.paymentMode === 'COD' ? 'Placing Order...' : 'Connecting to Razorpay...'}</span>
-                    </span>
+                    <span>Placing Order...</span>
                   ) : (
                     <>
-                      <span>
-                        {checkoutData.paymentMode === 'COD' ? 'Confirm & Place COD Order' : 'Proceed to Pay with Razorpay'} ({currencySymbol}{checkoutData.paymentMode === 'PARTIAL' ? checkoutData.depositAmount : checkoutData.finalTotal})
-                      </span>
+                      <span>Confirm & Place Order ({currencySymbol}{checkoutData.paymentMode === 'PARTIAL' ? checkoutData.depositAmount : checkoutData.finalTotal})</span>
                       <span>→</span>
                     </>
                   )}
@@ -393,7 +299,7 @@ export default function CheckoutModal({
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed font-medium">
-              Thank you for shopping with ValueLife Essentials ({import.meta.env.VITE_APP_DOMAIN || 'valuelifeessentials.com'})! Your order confirmation has been registered and is being processed for express home delivery.
+              Thank you for shopping with ValueLife Essentials (valuelifeessentials.com)! Your order confirmation has been registered and is being processed for express home delivery.
             </p>
 
             {/* DUAL ACTION BUTTONS */}

@@ -136,7 +136,7 @@ export default function CustomerProfilePage({
       }
 
       if (hasGstin && profileForm.gstin_number.trim().length < 15) {
-        if (showToast) showToast('error', 'Invalid GSTIN Format', 'GSTIN Identification Number must be 15 alphanumeric characters (e.g. 36AAPFV4767N1Z4).');
+        if (showToast) showToast('error', 'Invalid GSTIN Format', 'GSTIN Identification Number must be 15 alphanumeric characters (e.g. 27AAAAA0000A1Z5).');
         return;
       }
     }
@@ -165,7 +165,7 @@ export default function CustomerProfilePage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileForm)
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json();
       if (res.ok) {
         const updatedUserObj = {
           ...currentUser,
@@ -226,7 +226,7 @@ export default function CustomerProfilePage({
           new_password: passwordForm.newPassword
         })
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json();
       if (res.ok) {
         setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
         if (showToast) showToast('success', 'Password Updated', 'Your password has been changed successfully!');
@@ -255,7 +255,7 @@ export default function CustomerProfilePage({
           customer_email: currentUser.email
         })
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json();
       if (res.ok) {
         if (showToast) showToast('success', 'Order Cancelled', `Order ${selectedOrderToCancel.order_number} has been cancelled.`);
         setSelectedOrderToCancel(null);
