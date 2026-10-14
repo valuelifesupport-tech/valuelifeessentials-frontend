@@ -50,7 +50,7 @@ export const getInitialRouteState = () => {
   }
   if (path.startsWith('/collection/')) {
     const collection = path.replace('/collection/', '');
-    return { view: 'catalog', slug: null, category, collection: null };
+    return { view: 'catalog', slug: null, category: null, collection };
   }
   return { view: 'store', slug: null, category: null, collection: null };
 };

@@ -25,6 +25,7 @@ export function ToastProvider({ children }) {
 export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) {
+    // Return safe fallback so components can call showToast even if outside provider
     return {
       showToast: (type, title, message) => console.log(`[Toast ${type}] ${title}: ${message}`),
       hideToast: () => {},
