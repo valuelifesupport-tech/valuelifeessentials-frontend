@@ -134,7 +134,7 @@ export default function ProfileOrdersTab({
                         const cgst = Number(order.cgst_amount || 0);
                         const sgst = Number(order.sgst_amount || 0);
                         const igst = Number(order.igst_amount || 0);
-                        const isIntra = (!order.state_name || order.state_name.toLowerCase() === 'maharashtra');
+                        const isIntra = (cgst > 0 || sgst > 0) || (igst === 0 && (!order.state_name || order.state_name.toLowerCase() === 'telangana'));
 
                         if (taxAmt <= 0) return null;
 
@@ -153,7 +153,7 @@ export default function ProfileOrdersTab({
                             </span>
 
                             <span className="text-gray-400 text-[10px] font-mono">
-                              {isIntra || (cgst > 0 || sgst > 0)
+                              {isIntra
                                 ? `(CGST: ₹${(cgst || taxAmt / 2).toFixed(1)} + SGST: ₹${(sgst || taxAmt / 2).toFixed(1)})`
                                 : `(IGST: ₹${(igst || taxAmt).toFixed(1)})`
                               }
