@@ -2,11 +2,20 @@ import { getApiUrl } from '../../api/config';
 import React, { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2, ShieldCheck, Truck, Clock } from 'lucide-react';
 import BlogListingView from '../blog/BlogListingView';
+import { applyPageSEO } from '../../utils/seo';
 
 export default function PageView({ slug, onGoHome, showToast }) {
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Apply dynamic SEO tags for custom pages
+  useEffect(() => {
+    if (page) {
+      const cleanup = applyPageSEO(page);
+      return cleanup;
+    }
+  }, [page]);
 
   // Contact form state
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });

@@ -177,3 +177,28 @@ export function applyProductSEO(product, currency = 'INR', currencySymbol = '₹
     removeStructuredData('product-schema-jsonld');
   };
 }
+
+/**
+ * Applies dynamic SEO optimization for a Custom Page.
+ */
+export function applyPageSEO(page) {
+  if (!page || typeof document === 'undefined') return () => {};
+
+  const pageUrl = `${SITE_URL}/pages/${page.slug || ''}`;
+  const title = page.seo_title || `${page.title} | ValueLife Essentials`;
+  const description = page.seo_description || cleanText(page.content || page.content_html, 160) || DEFAULT_DESCRIPTION;
+
+  document.title = title;
+  setMetaTag('name', 'description', description);
+  setCanonicalUrl(pageUrl);
+  setMetaTag('property', 'og:title', title);
+  setMetaTag('property', 'og:description', description);
+  setMetaTag('property', 'og:url', pageUrl);
+  setMetaTag('property', 'og:type', 'article');
+  setMetaTag('property', 'og:site_name', 'ValueLife Essentials');
+
+  return () => {
+    document.title = DEFAULT_TITLE;
+    setMetaTag('name', 'description', DEFAULT_DESCRIPTION);
+  };
+}
