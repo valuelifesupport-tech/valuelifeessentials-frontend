@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Star, Heart, ShoppingBag, Ban } from 'lucide-react';
+import { Star, Heart, ShoppingBag, Ban, RefreshCw } from 'lucide-react';
+import { checkLiveServiceability, estimateDeliveryFromHyderabad } from '../../utils/deliveryEstimator';
 
 export default function ProductPricingBox({
   productData,
@@ -27,28 +28,50 @@ export default function ProductPricingBox({
 
   const [pincode, setPincode] = useState('');
   const [pincodeResult, setPincodeResult] = useState(null);
+  const [checkingPin, setCheckingPin] = useState(false);
 
   const handleCheckPincode = async () => {
     if (!pincode || pincode.length < 6) {
       setPincodeResult({ ok: false, text: 'Please enter a valid 6-digit PIN code.' });
       return;
     }
+    setCheckingPin(true);
     try {
-      const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
-      const data = await res.json();
-      if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0) {
-        const po = data[0].PostOffice[0];
-        const city = po.District || po.Name || 'Your City';
-        const region = po.State ? `, ${po.State}` : '';
-        setPincodeResult({
-          ok: true,
-          text: `✅ Delivery to: ${city}${region} – ${pincode} • Estimated: 2-4 business days`
-        });
-      } else {
-        setPincodeResult({ ok: true, text: `✅ Delivery available to PIN ${pincode} • Estimated: 2-4 business days` });
-      }
+      let destName = '';
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+        const data = await res.json();
+        if (data && data[0]?.Status === 'Success' && data[0]?.PostOffice?.length > 0) {
+          const po = data[0].PostOffice[0];
+          const city = po.District || po.Name || '';
+          const region = po.State ? `, ${po.State}` : '';
+          destName = `${city}${region}`;
+        }
+      } catch (_) {}
+
+      // Calculate transit speed and delivery date starting from Hyderabad (PIN: 500011)
+      const estimate = await checkLiveServiceability(pincode);
+
+      setPincodeResult({
+        ok: true,
+        dest: destName || `PIN ${pincode}`,
+        speed: estimate.speedText,
+        deliveryBy: estimate.formattedDate,
+        origin: estimate.originCity || 'Hyderabad (500011)',
+        badge: estimate.badge || 'Fast Express'
+      });
     } catch {
-      setPincodeResult({ ok: true, text: `✅ Delivery available to PIN ${pincode} • Estimated: 2-4 business days` });
+      const fallback = estimateDeliveryFromHyderabad(pincode);
+      setPincodeResult({
+        ok: true,
+        dest: `PIN ${pincode}`,
+        speed: fallback.speedText,
+        deliveryBy: fallback.formattedDate,
+        origin: 'Hyderabad (500011)',
+        badge: fallback.badge
+      });
+    } finally {
+      setCheckingPin(false);
     }
   };
 
@@ -321,15 +344,43 @@ export default function ProductPricingBox({
           <button
             type="button"
             onClick={handleCheckPincode}
-            className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer"
+            disabled={checkingPin}
+            className="bg-[#2d6a4f] hover:bg-[#1b4332] disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            Check
+            {checkingPin ? <RefreshCw size={12} className="animate-spin" /> : 'Check'}
           </button>
         </div>
+
         {pincodeResult && (
-          <p className={`text-xs font-semibold p-2 rounded-xl ${pincodeResult.ok ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
-            {pincodeResult.text}
-          </p>
+          <div className={`p-3 rounded-xl border text-xs space-y-1.5 ${
+            pincodeResult.ok 
+              ? 'bg-emerald-50/90 text-emerald-950 border-emerald-200 shadow-xs' 
+              : 'bg-red-50 text-red-600 border-red-200'
+          }`}>
+            {pincodeResult.ok ? (
+              <>
+                <div className="flex items-center justify-between gap-1 flex-wrap font-bold">
+                  <span className="flex items-center gap-1.5 text-emerald-900">
+                    <span>📍</span>
+                    <span>Delivery to: <strong>{pincodeResult.dest}</strong></span>
+                  </span>
+                  <span className="bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded text-[10px] font-mono font-bold">
+                    {pincodeResult.badge || 'Fast Express'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-emerald-950 font-extrabold text-[12px]">
+                  <span>🚚</span>
+                  <span>Estimated Delivery by <strong>{pincodeResult.deliveryBy}</strong> ({pincodeResult.speed})</span>
+                </div>
+                <div className="text-[10px] text-emerald-700/90 flex items-center gap-1 pt-1.5 border-t border-emerald-200/70 font-medium">
+                  <span>🏢</span>
+                  <span>Dispatched from Central Warehouse: <strong>{pincodeResult.origin}</strong></span>
+                </div>
+              </>
+            ) : (
+              <p className="font-semibold">{pincodeResult.text}</p>
+            )}
+          </div>
         )}
       </div>
 
