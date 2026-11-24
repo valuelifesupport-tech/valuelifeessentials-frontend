@@ -372,10 +372,6 @@ export default function ProductPricingBox({
                   <span>🚚</span>
                   <span>Estimated Delivery by <strong>{pincodeResult.deliveryBy}</strong> ({pincodeResult.speed})</span>
                 </div>
-                <div className="text-[10px] text-emerald-700/90 flex items-center gap-1 pt-1.5 border-t border-emerald-200/70 font-medium">
-                  <span>🏢</span>
-                  <span>Dispatched from Central Warehouse: <strong>{pincodeResult.origin}</strong></span>
-                </div>
               </>
             ) : (
               <p className="font-semibold">{pincodeResult.text}</p>

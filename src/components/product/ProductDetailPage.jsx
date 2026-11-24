@@ -332,15 +332,9 @@ export default function ProductDetailPage({
               </div>
             )}
             {activeTab === 'shipping' && (
-              <div className="space-y-1.5 text-xs text-gray-700">
-                <p className="font-semibold flex items-center gap-1.5 text-emerald-800">
-                  <span>🏢</span>
-                  <span>Dispatched from Central Warehouse: <strong>Bowenpally, Hyderabad (PIN: 500011)</strong></span>
-                </p>
-                <p className="text-gray-600">
-                  Express doorstep delivery across India in 1-4 business days (Local Hyderabad & Telangana: 1-2 days). Packed in eco-friendly tamper-evident packaging.
-                </p>
-              </div>
+              <p className="text-xs text-gray-600">
+                Express doorstep delivery across India in 1-4 business days (Local & neighboring states in 1-2 days). Packed in safe, eco-friendly tamper-evident packaging.
+              </p>
             )}
           </div>
         </div>

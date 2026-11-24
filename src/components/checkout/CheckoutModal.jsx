@@ -648,23 +648,15 @@ export default function CheckoutModal({
                     </div>
                   </div>
 
-                  {/* DYNAMIC ESTIMATED DELIVERY SPEED FROM HYDERABAD (PIN 500011) */}
-                  <div className="p-2.5 bg-emerald-50/90 border border-emerald-200/90 rounded-xl space-y-1 text-xs">
-                    <div className="flex items-center justify-between font-bold text-emerald-950 flex-wrap gap-1">
-                      <span className="flex items-center gap-1.5">
-                        <span>🚚</span>
-                        <span>Estimated Delivery: <strong>{deliveryEst.speedText}</strong></span>
-                      </span>
-                      <span className="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded font-mono font-bold">
-                        {deliveryEst.badge}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-emerald-800 flex-wrap gap-1">
-                      <span>Expected by: <strong>{deliveryEst.formattedDate}</strong></span>
-                      <span className="text-[10px] text-emerald-700 font-medium">
-                        Dispatched from: <strong>Hyderabad (500011)</strong>
-                      </span>
-                    </div>
+                  {/* DYNAMIC ESTIMATED DELIVERY SPEED */}
+                  <div className="p-2.5 bg-emerald-50/80 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs flex-wrap gap-1">
+                    <span className="flex items-center gap-1.5 text-emerald-950 font-bold">
+                      <span>🚚</span>
+                      <span>Estimated Delivery: <strong>{deliveryEst.speedText}</strong> (By {deliveryEst.formattedDate})</span>
+                    </span>
+                    <span className="text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded font-mono font-bold">
+                      {deliveryEst.badge}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -750,13 +742,6 @@ export default function CheckoutModal({
                 <span className="text-slate-400 font-medium">Estimated Delivery:</span>
                 <span className="text-emerald-400 font-bold flex items-center gap-1">
                   🚚 {successDeliveryEst.speedText} (By {successDeliveryEst.formattedDate})
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center pb-2 border-b border-slate-700/60 text-[11px]">
-                <span className="text-slate-400 font-medium">Dispatch Origin:</span>
-                <span className="text-slate-200 font-mono font-medium flex items-center gap-1">
-                  🏢 Central Hub, Hyderabad (500011)
                 </span>
               </div>
 
